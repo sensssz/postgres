@@ -1873,7 +1873,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	}
 
     ereport(LOG,
-            (errmsg("execute %s to %s", portal->commandTag, portal->stmts)));
+            (errmsg("execute %s", portal->commandTag)));
 
 	/* Does the portal contain a transaction command? */
 	is_xact_command = IsTransactionStmtList(portal->stmts);
