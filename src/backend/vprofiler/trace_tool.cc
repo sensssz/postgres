@@ -239,7 +239,6 @@ void *TraceTool::check_write_log(void *arg)
   {
     sleep(5);
     timespec now = get_time();
-      ereport(LOG, (errmsg("Checking")));
     if (now.tv_sec - global_last_query.tv_sec >= 5 && transaction_id > 0)
     {
       /* Create a back up of the debug log file in case it's overwritten. */
@@ -355,7 +354,6 @@ void TraceTool::write_latency(string dir)
 {
   ofstream tpcc_log;
   tpcc_log.open(dir + "tpcc");
-    ereport(LOG, (errmsg("Writing to file tpcc")));
   
   pthread_rwlock_wrlock(&data_lock);
   for (ulint index = 0; index < transaction_start_times.size(); ++index)
