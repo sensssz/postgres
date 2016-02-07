@@ -1476,7 +1476,7 @@ exec_bind_message(StringInfo input_message)
 	portal_name = pq_getmsgstring(input_message);
 	stmt_name = pq_getmsgstring(input_message);
 
-	ereport(LOG,
+	ereport(DEBUG2,
 			(errmsg("bind %s to %s",
 					*portal_name ? portal_name : "<unnamed>",
 					*stmt_name ? stmt_name : "<unnamed>")));

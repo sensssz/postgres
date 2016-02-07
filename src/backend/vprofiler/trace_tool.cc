@@ -1,10 +1,12 @@
 #include "vprofiler/trace_tool.h"
 #include <pthread.h>
 #include <unistd.h>
+#include "utils/elog.h"
 #include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <c.h>
 
 using std::ifstream;
 using std::ofstream;
@@ -28,8 +30,7 @@ private:
     static pthread_mutex_t instance_mutex;  /*!< Mutex for protecting instance. */
 
     static timespec global_last_query;      /*!< Time when MySQL receives the most recent query. */
-    static pthread_mutex_t last_query_mutex;/*!< Mutex for protecting global_last_query */
-    static __thread bool new_transaction;   /*!< True if we need to start a new transaction. */
+    static pthread_mutex_t last_query_mutex;
     static __thread timespec trans_start;   /*!< Start time of the current transaction. */
     vector<vector<int> > function_times;    /*!< Stores the running time of the child functions
                                                  and also transaction latency (the last one). */
@@ -239,6 +240,7 @@ void *TraceTool::check_write_log(void *arg)
   {
     sleep(5);
     timespec now = get_time();
+      ereport(LOG, (errmsg("Checking")));
     if (now.tv_sec - global_last_query.tv_sec >= 5 && transaction_id > 0)
     {
       /* Create a back up of the debug log file in case it's overwritten. */
@@ -354,6 +356,7 @@ void TraceTool::write_latency(string dir)
 {
   ofstream tpcc_log;
   tpcc_log.open(dir + "tpcc");
+    ereport(LOG, (errmsg("Writing to file tpcc")));
   
   pthread_rwlock_wrlock(&data_lock);
   for (ulint index = 0; index < transaction_start_times.size(); ++index)
