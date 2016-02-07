@@ -124,6 +124,18 @@ static __thread timespec call_start;
 static __thread timespec call_end;
 #endif
 
+void QUERY_START() {
+#ifdef MONITOR
+  TraceTool::get_instance()->start_new_query();
+#endif
+}
+
+void QUERY_END() {
+#ifdef MONITOR
+    TraceTool::get_instance()->end_query();
+#endif
+}
+
 void TRACE_FUNCTION_START()
 {
 #ifdef MONITOR

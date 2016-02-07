@@ -3551,7 +3551,6 @@ PostgresMain(int argc, char *argv[],
 			 const char *dbname,
 			 const char *username)
 {
-    TRACE_FUNCTION_START();
 	int			firstchar;
 	StringInfoData input_message;
 	sigjmp_buf	local_sigjmp_buf;
@@ -3977,6 +3976,8 @@ PostgresMain(int argc, char *argv[],
 		 */
 		firstchar = ReadCommand(&input_message);
 
+        QUERY_START();
+
 		/*
 		 * (4) disable async signal conditions again.
 		 *
@@ -4016,6 +4017,12 @@ PostgresMain(int argc, char *argv[],
 					SetCurrentStatementStartTimestamp();
 
 					query_string = pq_getmsgstring(&input_message);
+
+
+                    ereport(LOG,
+                            (errmsg_internal("%s", "Query"),
+                             errdetail_internal("%s", query_string)));
+
 					pq_getmsgend(&input_message);
 
 					if (am_walsender)
@@ -4262,6 +4269,7 @@ PostgresMain(int argc, char *argv[],
 						 errmsg("invalid frontend message type %d",
 								firstchar)));
 		}
+        QUERY_END();
 	}							/* end of input-reading loop */
 }
 
