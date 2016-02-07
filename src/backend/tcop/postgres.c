@@ -4007,7 +4007,8 @@ PostgresMain(int argc, char *argv[],
 		if (ignore_till_sync && firstchar != EOF)
 			continue;
 
-        ereport(LOG, (errmsg("First char is %c\n", firstchar)));
+        ereport(LOG, (errmsg("%s", pq_getmsgstring(&input_message))));
+        ereport(LOG, (errmsg("First char is %c", firstchar)));
 
 		switch (firstchar)
 		{
