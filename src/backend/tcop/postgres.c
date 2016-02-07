@@ -3976,9 +3976,7 @@ PostgresMain(int argc, char *argv[],
 		 */
 		firstchar = ReadCommand(&input_message);
 
-        ereport(LOG,
-                (errmsg_internal("%s", "Read"),
-                        errdetail_internal("%s", "Command is read")));
+        ereport(LOG, (errmsg("Command is read")));
 
         QUERY_START();
 
