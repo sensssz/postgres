@@ -34,8 +34,6 @@ private:
                                                  and also transaction latency (the last one). */
     vector<ulint> transaction_start_times;  /*!< Stores the start time of transactions. */
 
-    ofstream log_file;
-
     TraceTool();
     TraceTool(TraceTool const&){};
 public:
@@ -223,8 +221,6 @@ TraceTool::TraceTool() : function_times()
   transaction_start_times.push_back(0);
   
   srand(time(0));
-
-    log_file.open("logs/trace.log");
 }
 
 bool TraceTool::should_monitor()
@@ -241,7 +237,6 @@ void *TraceTool::check_write_log(void *arg)
   {
     sleep(5);
     timespec now = get_time();
-      instance->log_file << "Checking" << endl;
     if (now.tv_sec - global_last_query.tv_sec >= 5 && transaction_id > 0)
     {
       /* Create a back up of the debug log file in case it's overwritten. */
