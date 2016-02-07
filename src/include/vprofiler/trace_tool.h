@@ -24,6 +24,10 @@ void TRX_END();
 
 void COMMIT();
 
+void PATH_INC();
+
+void PATH_DEC();
+
 /********************************************************************//**
 This function marks the start of a function call */
 void TRACE_FUNCTION_START();

@@ -14,7 +14,7 @@ using std::vector;
 using std::endl;
 using std::string;
 
-#define TARGET_PATH_COUNT 42
+#define TARGET_PATH_COUNT 1
 #define NUMBER_OF_FUNCTIONS 0
 #define LATENCY
 #define MONITOR
@@ -129,6 +129,18 @@ void TRX_END() {
 void COMMIT() {
 #ifdef MONITOR
     TraceTool::get_instance()->is_commit = true;
+#endif
+}
+
+void PATH_INC() {
+#ifdef MONITOR
+    TraceTool::get_instance()->path_count++;
+#endif
+}
+
+void PATH_DEC() {
+#ifdef MONITOR
+    TraceTool::get_instance()->path_count--;
 #endif
 }
 
