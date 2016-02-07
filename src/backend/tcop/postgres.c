@@ -4015,6 +4015,8 @@ PostgresMain(int argc, char *argv[],
 		if (ignore_till_sync && firstchar != EOF)
 			continue;
 
+        ereport(LOG, (errmsg("%c", firstchar)));
+
 		switch (firstchar)
 		{
 			case 'Q':			/* simple query */
