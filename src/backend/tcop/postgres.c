@@ -24,6 +24,8 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/socket.h>
+
+#include "vprofiler/trace_tool.h"
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
@@ -3549,6 +3551,7 @@ PostgresMain(int argc, char *argv[],
 			 const char *dbname,
 			 const char *username)
 {
+    TRACE_FUNCTION_START();
 	int			firstchar;
 	StringInfoData input_message;
 	sigjmp_buf	local_sigjmp_buf;
