@@ -1872,8 +1872,15 @@ exec_execute_message(const char *portal_name, long max_rows)
 		return;
 	}
 
-    ereport(LOG,
+    ereport(DEBUG2,
             (errmsg("execute %s", portal->commandTag)));
+
+    if (strncmp(portal->commandTag, "BEGIN", strlen("BEGIN")) == 0) {
+        TRX_START();
+    }
+    if (strncmp(portal->commandTag, "COMMIT", strlen("COMMIT")) == 0) {
+        COMMIT();
+    }
 
 	/* Does the portal contain a transaction command? */
 	is_xact_command = IsTransactionStmtList(portal->stmts);
@@ -4010,8 +4017,6 @@ PostgresMain(int argc, char *argv[],
 		if (ignore_till_sync && firstchar != EOF)
 			continue;
 
-        ereport(LOG, (errmsg("First char is %c", firstchar)));
-
 		switch (firstchar)
 		{
 			case 'Q':			/* simple query */
@@ -4048,7 +4053,6 @@ PostgresMain(int argc, char *argv[],
 
 					stmt_name = pq_getmsgstring(&input_message);
 					query_string = pq_getmsgstring(&input_message);
-                    ereport(LOG, (errmsg(query_string)));
 					numParams = pq_getmsgint(&input_message, 2);
 					if (numParams > 0)
 					{
@@ -4270,7 +4274,7 @@ PostgresMain(int argc, char *argv[],
 						 errmsg("invalid frontend message type %d",
 								firstchar)));
 		}
-        QUERY_END(firstchar == 'S');
+        TRX_END();
 	}							/* end of input-reading loop */
 }
 

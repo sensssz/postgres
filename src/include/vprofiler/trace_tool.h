@@ -18,9 +18,11 @@ extern ulint transaction_id;
 To break down the variance of a function, we need to trace the running
 time of a function and the functions it calls. */
 
-void QUERY_START();
+void TRX_START();
 
-void QUERY_END(bool commit);
+void TRX_END();
+
+void COMMIT();
 
 /********************************************************************//**
 This function marks the start of a function call */

@@ -2,12 +2,7 @@
 #include <algorithm>
 #include <pthread.h>
 #include <fstream>
-#include <time.h>
-#include <unistd.h>
-#include <cstring>
 #include <sstream>
-#include <cstdlib>
-#include <cassert>
 #include <vector>
 
 using std::ifstream;
@@ -79,10 +74,10 @@ public:
 
     /********************************************************************//**
     Start a new query. This may also start a new transaction. */
-    void start_new_query();
+    void start_trx();
     /********************************************************************//**
     End a new query. This may also end the current transaction. */
-    void end_query(bool commit);
+    void end_trx();
     /********************************************************************//**
     End the current transaction. */
     void end_transaction();
@@ -120,15 +115,21 @@ static __thread timespec call_start;
 static __thread timespec call_end;
 #endif
 
-void QUERY_START() {
+void TRX_START() {
 #ifdef MONITOR
-  TraceTool::get_instance()->start_new_query();
+  TraceTool::get_instance()->start_trx();
 #endif
 }
 
-void QUERY_END(bool commit) {
+void TRX_END() {
 #ifdef MONITOR
-    TraceTool::get_instance()->end_query(commit);
+    TraceTool::get_instance()->end_trx();
+#endif
+}
+
+void COMMIT() {
+#ifdef MONITOR
+    TraceTool::get_instance()->is_commit = true;
 #endif
 }
 
@@ -283,21 +284,15 @@ ulint TraceTool::now_micro()
 
 /********************************************************************//**
 Start a new query. This may also start a new transaction. */
-void TraceTool::start_new_query()
+void TraceTool::start_trx()
 {
   is_commit = false;
   /* This happens when a log write happens, which marks the end of a phase. */
   if (current_transaction_id > transaction_id)
   {
     current_transaction_id = 0;
-    new_transaction = true;
-    commit_successful = true;
   }
 #ifdef LATENCY
-  /* Start a new transaction. Note that we don't reset the value of new_transaction here.
-     We do it in set_query after looking at the first query of a transaction. */
-  if (new_transaction)
-  {
     trans_start = get_time();
     commit_successful = true;
     /* Use a write lock here because we are appending content to the vector. */
@@ -308,21 +303,20 @@ void TraceTool::start_new_query()
          iterator != function_times.end();
          ++iterator)
     {
-      iterator->push_back(0);
+        iterator->push_back(0);
     }
     transaction_start_times.push_back(0);
     pthread_rwlock_unlock(&data_lock);
-  }
   pthread_mutex_lock(&last_query_mutex);
   clock_gettime(CLOCK_REALTIME, &global_last_query);
   pthread_mutex_unlock(&last_query_mutex);
 #endif
 }
 
-void TraceTool::end_query(bool commit)
+void TraceTool::end_trx()
 {
 #ifdef LATENCY
-  if (commit)
+  if (is_commit)
   {
     end_transaction();
   }
@@ -342,7 +336,6 @@ void TraceTool::end_transaction()
   }
   pthread_rwlock_unlock(&data_lock);
 #endif
-  new_transaction = true;
 }
 
 void TraceTool::add_record(int function_index, long duration)
