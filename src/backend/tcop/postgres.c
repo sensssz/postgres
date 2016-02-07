@@ -3986,8 +3986,6 @@ PostgresMain(int argc, char *argv[],
 		 */
 		firstchar = ReadCommand(&input_message);
 
-        QUERY_START();
-
 		/*
 		 * (4) disable async signal conditions again.
 		 *
