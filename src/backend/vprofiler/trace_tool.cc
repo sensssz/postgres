@@ -1,6 +1,7 @@
 #include "vprofiler/trace_tool.h"
-#include <algorithm>
 #include <pthread.h>
+#include <unistd.h>
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <vector>
