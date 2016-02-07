@@ -82,14 +82,10 @@ public:
     void start_new_query();
     /********************************************************************//**
     End a new query. This may also end the current transaction. */
-    void end_query();
+    void end_query(bool commit);
     /********************************************************************//**
     End the current transaction. */
     void end_transaction();
-
-    /********************************************************************//**
-    Analysis the current query to find out the transaction type. */
-    void set_query(const char *query);
     /********************************************************************//**
     Dump data about function running time and latency to log file. */
     void write_latency(string dir);
@@ -130,7 +126,7 @@ void QUERY_START() {
 #endif
 }
 
-void QUERY_END() {
+void QUERY_END(bool commit) {
 #ifdef MONITOR
     TraceTool::get_instance()->end_query();
 #endif
@@ -323,22 +319,10 @@ void TraceTool::start_new_query()
 #endif
 }
 
-void TraceTool::set_query(const char *new_query)
-{
-  // Look at the first query of a transaction
-  if (new_transaction)
-  {
-    pthread_rwlock_rdlock(&data_lock);
-    pthread_rwlock_unlock(&data_lock);
-    /* Reset the value of new_transaction. */
-    new_transaction = false;
-  }
-}
-
-void TraceTool::end_query()
+void TraceTool::end_query(bool commit)
 {
 #ifdef LATENCY
-  if (is_commit)
+  if (commit)
   {
     end_transaction();
   }

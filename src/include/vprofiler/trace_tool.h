@@ -20,7 +20,7 @@ time of a function and the functions it calls. */
 
 void QUERY_START();
 
-void QUERY_END();
+void QUERY_END(bool commit);
 
 /********************************************************************//**
 This function marks the start of a function call */

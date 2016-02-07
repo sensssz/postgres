@@ -1476,7 +1476,7 @@ exec_bind_message(StringInfo input_message)
 	portal_name = pq_getmsgstring(input_message);
 	stmt_name = pq_getmsgstring(input_message);
 
-	ereport(DEBUG2,
+	ereport(LOG,
 			(errmsg("bind %s to %s",
 					*portal_name ? portal_name : "<unnamed>",
 					*stmt_name ? stmt_name : "<unnamed>")));
@@ -1871,6 +1871,9 @@ exec_execute_message(const char *portal_name, long max_rows)
 		NullCommand(dest);
 		return;
 	}
+
+    ereport(LOG,
+            (errmsg("execute %s to %s", portal->commandTag, portal->stmts)));
 
 	/* Does the portal contain a transaction command? */
 	is_xact_command = IsTransactionStmtList(portal->stmts);
@@ -4007,7 +4010,6 @@ PostgresMain(int argc, char *argv[],
 		if (ignore_till_sync && firstchar != EOF)
 			continue;
 
-        ereport(LOG, (errmsg("%s", pq_getmsgstring(&input_message))));
         ereport(LOG, (errmsg("First char is %c", firstchar)));
 
 		switch (firstchar)
@@ -4020,10 +4022,6 @@ PostgresMain(int argc, char *argv[],
 					SetCurrentStatementStartTimestamp();
 
 					query_string = pq_getmsgstring(&input_message);
-
-                    ereport(LOG,
-                            (errmsg_internal("%s", "Query"),
-                             errdetail_internal("%s", query_string)));
 
 					pq_getmsgend(&input_message);
 
@@ -4050,6 +4048,7 @@ PostgresMain(int argc, char *argv[],
 
 					stmt_name = pq_getmsgstring(&input_message);
 					query_string = pq_getmsgstring(&input_message);
+                    ereport(LOG, (errmsg(query_string)));
 					numParams = pq_getmsgint(&input_message, 2);
 					if (numParams > 0)
 					{
@@ -4271,7 +4270,7 @@ PostgresMain(int argc, char *argv[],
 						 errmsg("invalid frontend message type %d",
 								firstchar)));
 		}
-        QUERY_END();
+        QUERY_END(firstchar == 'S');
 	}							/* end of input-reading loop */
 }
 
