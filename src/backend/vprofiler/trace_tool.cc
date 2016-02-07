@@ -1,12 +1,10 @@
 #include "vprofiler/trace_tool.h"
 #include <pthread.h>
 #include <unistd.h>
-#include "utils/elog.h"
 #include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <c.h>
 
 using std::ifstream;
 using std::ofstream;
