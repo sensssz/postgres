@@ -1,6 +1,10 @@
 #ifndef MY_TRACE_TOOL_H
 #define MY_TRACE_TOOL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** This macro is used for tracing the running time of
     a function call which appears inside an if statement*/
 #define TRACE_S_E(function_call, index) (TRACE_START()|(function_call)|TRACE_END(index))
@@ -30,5 +34,9 @@ bool TRACE_START();
 This function marks the end of a child function call. */
 bool TRACE_END(
   int index);   /*!< Index of the child function call. */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
