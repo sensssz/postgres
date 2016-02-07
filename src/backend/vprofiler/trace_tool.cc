@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <fstream>
 #include <time.h>
+#include <sys/time.h>
 #include <cstring>
 #include <sstream>
 #include <cstdlib>
