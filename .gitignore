@@ -27,6 +27,9 @@ win32ver.rc
 *.exe
 lib*dll.def
 lib*.pc
+*.idea
+CMakeLists.txt
+**/.DS_Store
 
 # Local excludes in root directory
 /GNUmakefile
