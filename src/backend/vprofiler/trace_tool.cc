@@ -128,7 +128,7 @@ void QUERY_START() {
 
 void QUERY_END(bool commit) {
 #ifdef MONITOR
-    TraceTool::get_instance()->end_query();
+    TraceTool::get_instance()->end_query(commit);
 #endif
 }
 
