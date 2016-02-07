@@ -106,7 +106,6 @@ pthread_mutex_t TraceTool::last_query_mutex = PTHREAD_MUTEX_INITIALIZER;
 __thread int TraceTool::path_count = 0;
 __thread bool TraceTool::is_commit = false;
 __thread bool TraceTool::commit_successful = true;
-__thread bool TraceTool::new_transaction = true;
 __thread timespec TraceTool::trans_start;
 
 /* Define MONITOR if needs to trace running time of functions. */
