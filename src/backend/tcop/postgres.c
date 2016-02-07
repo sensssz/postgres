@@ -3976,8 +3976,6 @@ PostgresMain(int argc, char *argv[],
 		 */
 		firstchar = ReadCommand(&input_message);
 
-        ereport(LOG, (errmsg("Command is read\n")));
-
         QUERY_START();
 
 		/*
@@ -4008,6 +4006,8 @@ PostgresMain(int argc, char *argv[],
 		 */
 		if (ignore_till_sync && firstchar != EOF)
 			continue;
+
+        ereport(LOG, (errmsg("First char is %c\n", firstchar)));
 
 		switch (firstchar)
 		{
