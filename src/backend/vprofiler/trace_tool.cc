@@ -15,7 +15,7 @@ using std::endl;
 using std::string;
 
 #define TARGET_PATH_COUNT 1
-#define NUMBER_OF_FUNCTIONS 0
+#define NUMBER_OF_FUNCTIONS 33
 #define LATENCY
 #define MONITOR
 
