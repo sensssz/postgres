@@ -1876,14 +1876,13 @@ exec_execute_message(const char *portal_name, long max_rows)
             (errmsg("execute %s", portal->commandTag)));
 
     if (strncmp(portal->commandTag, "BEGIN", strlen("BEGIN")) == 0) {
-        ereport(LOG,
-                (errmsg("Command is BEGIN")));
         TRX_START();
-    }
-    if (strncmp(portal->commandTag, "COMMIT", strlen("COMMIT")) == 0) {
-        ereport(LOG,
-                (errmsg("Command is COMMIT")));
-        COMMIT();
+    } else if (strncmp(portal->commandTag, "COMMIT", strlen("COMMIT")) == 0) {
+        COMMIT(true);
+    } else if (strncmp(portal->commandTag, "ROLLBACK", strlen("ROLLBACK")) == 0) {
+        COMMIT(false);
+    } else if (strncmp(portal->commandTag, "ABORT", strlen("ABORT")) == 0) {
+        COMMIT(true);
     }
 
 	/* Does the portal contain a transaction command? */

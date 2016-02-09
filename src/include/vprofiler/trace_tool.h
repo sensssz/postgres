@@ -22,7 +22,7 @@ void TRX_START();
 
 void TRX_END();
 
-void COMMIT();
+void COMMIT(bool successful);
 
 void PATH_INC();
 
