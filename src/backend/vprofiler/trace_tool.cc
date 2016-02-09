@@ -257,8 +257,8 @@ void *TraceTool::check_write_log(void *arg) {
         log_file << "Checking" << endl;
         timespec now = get_time();
         if (now.tv_sec - global_last_query.tv_sec >= 5 && transaction_id > 0) {
-            /* Create a new TraceTool instnance. */
-            TraceTool *old_instace = instance;
+            /* Create a new TraceTool instance. */
+            TraceTool *old_instance = instance;
             instance = new TraceTool;
 
             /* Reset the global transaction ID. */
@@ -267,8 +267,8 @@ void *TraceTool::check_write_log(void *arg) {
             /* Dump data in the old instance to log files and
                reclaim memory. */
             log_file << "Writing data to file" << endl;
-            old_instace->write_log();
-            delete old_instace;
+            old_instance->write_log();
+            delete old_instance;
         }
     }
     return NULL;
