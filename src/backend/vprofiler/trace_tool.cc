@@ -114,6 +114,8 @@ __thread ulint TraceTool::current_transaction_id = 0;
 timespec TraceTool::global_last_query;
 pthread_mutex_t TraceTool::last_query_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+ofstream TraceTool::log_file;
+
 __thread int TraceTool::path_count = 0;
 __thread bool TraceTool::is_commit = false;
 __thread bool TraceTool::commit_successful = true;
