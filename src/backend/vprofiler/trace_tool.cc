@@ -257,6 +257,7 @@ void *TraceTool::check_write_log(void *arg) {
         sleep(5);
         timespec now = get_time();
         if (now.tv_sec - global_last_query.tv_sec >= 5 && transaction_id > 0) {
+            log_file << "Long time no query." << endl;
             /* Create a new TraceTool instance. */
             TraceTool *old_instance = instance;
             instance = new TraceTool;
