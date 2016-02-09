@@ -248,6 +248,7 @@ bool TraceTool::should_monitor() {
 }
 
 void *TraceTool::check_write_log(void *arg) {
+    log_file << "Thread is started" << endl;
     /* Runs in an infinite loop and for every 5 seconds,
        check if there's any query comes in. If not, then
        dump data to log files. */
