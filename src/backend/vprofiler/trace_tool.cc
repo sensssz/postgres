@@ -31,6 +31,9 @@ private:
     static timespec global_last_query;
     /*!< Time when MySQL receives the most recent query. */
     static pthread_mutex_t last_query_mutex;
+
+    static ofstream log_file;
+
     static __thread timespec trans_start;
     /*!< Start time of the current transaction. */
     vector<vector<int> > function_times;
@@ -38,8 +41,6 @@ private:
                                                  and also transaction latency (the last one). */
     vector<ulint> transaction_start_times;
     /*!< Stores the start time of transactions. */
-
-    ofstream log_file;
 
     TraceTool();
 
@@ -233,7 +234,9 @@ TraceTool::TraceTool() : function_times() {
     transaction_start_times.push_back(0);
 
     srand(time(0));
-    log_file.open("log_file");
+    if (!log_file.is_open()) {
+        log_file.open("log_file");
+    }
 }
 
 bool TraceTool::should_monitor() {
@@ -249,13 +252,6 @@ void *TraceTool::check_write_log(void *arg) {
         instance->log_file << "Checking" << endl;
         timespec now = get_time();
         if (now.tv_sec - global_last_query.tv_sec >= 5 && transaction_id > 0) {
-            /* Create a back up of the debug log file in case it's overwritten. */
-            std::ifstream src("logs/trace.log", std::ios::binary);
-            std::ofstream dst("logs/trace.bak", std::ios::binary);
-            dst << src.rdbuf();
-            src.close();
-            dst.close();
-
             /* Create a new TraceTool instnance. */
             TraceTool *old_instace = instance;
             instance = new TraceTool;
@@ -265,6 +261,7 @@ void *TraceTool::check_write_log(void *arg) {
 
             /* Dump data in the old instance to log files and
                reclaim memory. */
+            instance->log_file << "Writing data to file" << endl;
             old_instace->write_log();
             delete old_instace;
         }
