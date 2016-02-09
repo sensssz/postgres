@@ -238,6 +238,7 @@ TraceTool::TraceTool() : function_times() {
     srand(time(0));
     if (!log_file.is_open()) {
         log_file.open("log_file");
+        log_file << "File is open now" << endl;
     }
 }
 
