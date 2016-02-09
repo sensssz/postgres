@@ -249,7 +249,7 @@ void *TraceTool::check_write_log(void *arg) {
        dump data to log files. */
     while (true) {
         sleep(5);
-        instance->log_file << "Checking" << endl;
+        log_file << "Checking" << endl;
         timespec now = get_time();
         if (now.tv_sec - global_last_query.tv_sec >= 5 && transaction_id > 0) {
             /* Create a new TraceTool instnance. */
@@ -261,7 +261,7 @@ void *TraceTool::check_write_log(void *arg) {
 
             /* Dump data in the old instance to log files and
                reclaim memory. */
-            instance->log_file << "Writing data to file" << endl;
+            log_file << "Writing data to file" << endl;
             old_instace->write_log();
             delete old_instace;
         }
