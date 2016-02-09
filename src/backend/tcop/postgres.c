@@ -1872,13 +1872,17 @@ exec_execute_message(const char *portal_name, long max_rows)
 		return;
 	}
 
-    ereport(DEBUG2,
+    ereport(LOG,
             (errmsg("execute %s", portal->commandTag)));
 
     if (strncmp(portal->commandTag, "BEGIN", strlen("BEGIN")) == 0) {
+        ereport(LOG,
+                (errmsg("Command is BEGIN")));
         TRX_START();
     }
     if (strncmp(portal->commandTag, "COMMIT", strlen("COMMIT")) == 0) {
+        ereport(LOG,
+                (errmsg("Command is COMMIT")));
         COMMIT();
     }
 
