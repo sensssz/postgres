@@ -253,8 +253,8 @@ void *TraceTool::check_write_log(void *arg) {
        check if there's any query comes in. If not, then
        dump data to log files. */
     while (true) {
-        sleep(5);
         log_file << "Checking" << endl;
+        sleep(5);
         timespec now = get_time();
         if (now.tv_sec - global_last_query.tv_sec >= 5 && transaction_id > 0) {
             /* Create a new TraceTool instance. */
