@@ -133,6 +133,10 @@ void set_id(int id) {
     }
 }
 
+int get_thread_id() {
+    return TraceTool::get_instance()->id;
+}
+
 pthread_t get_thread() {
     return TraceTool::back_thread;
 }

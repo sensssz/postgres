@@ -22,6 +22,8 @@ void set_should_shutdown(bool shutdown);
 
 void set_id(int id);
 
+int get_thread_id();
+
 void TRX_START();
 
 void TRX_END();
