@@ -273,10 +273,10 @@ void *TraceTool::check_write_log(void *arg) {
             log_file << "Writing data to file" << endl;
             old_instance->write_log();
             delete old_instance;
+        }
 
-            if (should_shutdown) {
-                break;
-            }
+        if (should_shutdown) {
+            break;
         }
     }
     return NULL;
