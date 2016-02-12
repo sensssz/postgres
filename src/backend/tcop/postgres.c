@@ -4101,9 +4101,7 @@ PostgresMain(int argc, char *argv[],
 					max_rows = pq_getmsgint(&input_message, 4);
 					pq_getmsgend(&input_message);
 
-                    PATH_INC();
 					exec_execute_message(portal_name, max_rows);
-                    PATH_DEC();
 				}
 				break;
 

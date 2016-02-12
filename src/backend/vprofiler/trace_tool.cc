@@ -15,7 +15,7 @@ using std::endl;
 using std::string;
 using std::to_string;
 
-#define TARGET_PATH_COUNT 1
+#define TARGET_PATH_COUNT 0
 #define NUMBER_OF_FUNCTIONS 34
 #define LATENCY
 #define MONITOR
@@ -161,14 +161,12 @@ void COMMIT(bool successful) {
 void PATH_INC() {
 #ifdef MONITOR
     TraceTool::get_instance()->path_count++;
-    TraceTool::log_file << "Incrementing path_count to " << TraceTool::get_instance()->path_count << endl;
 #endif
 }
 
 void PATH_DEC() {
 #ifdef MONITOR
     TraceTool::get_instance()->path_count--;
-    TraceTool::log_file << "Decrementing path_count to " << TraceTool::get_instance()->path_count << endl;
 #endif
 }
 
