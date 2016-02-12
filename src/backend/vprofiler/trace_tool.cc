@@ -229,7 +229,9 @@ TraceTool *TraceTool::get_instance() {
         log_file << "Thread " << thread << " gets the instance" << endl;
         threads.insert(thread);
     }
-    log_file << threads.size() << endl;
+    if (threads.size() > 1) {
+        log_file << threads.size() << endl;
+    }
     return instance;
 }
 
