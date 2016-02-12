@@ -225,7 +225,7 @@ TraceTool *TraceTool::get_instance() {
 #endif
     }
     pthread_t thread = pthread_self();
-    if (threads.find(thread) != threads.end()) {
+    if (threads.find(thread) == threads.end()) {
         log_file << "Thread " << thread << " is getting the instance" << endl;
         threads.insert(thread);
     }
