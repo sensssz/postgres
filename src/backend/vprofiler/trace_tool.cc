@@ -5,7 +5,6 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <string>
 
 using std::ifstream;
 using std::ofstream;
@@ -53,7 +52,8 @@ public:
     static __thread bool is_commit;
     /*!< True if the current transactions commits. */
     static __thread bool commit_successful; /*!< True if the current transaction successfully commits. */
-
+    static bool should_shutdown;
+    static pthread_t back_thread;
 
     /********************************************************************//**
     The Singleton pattern. Used for getting the instance of this class. */
@@ -112,6 +112,9 @@ __thread bool TraceTool::is_commit = false;
 __thread bool TraceTool::commit_successful = true;
 __thread timespec TraceTool::trans_start;
 
+bool TraceTool::should_shutdown = false;
+pthread_t back_thread;
+
 /* Define MONITOR if needs to trace running time of functions. */
 #ifdef MONITOR
 static __thread timespec function_start;
@@ -119,6 +122,14 @@ static __thread timespec function_end;
 static __thread timespec call_start;
 static __thread timespec call_end;
 #endif
+
+pthread_t *get_thread() {
+    return &TraceTool::back_thread;
+}
+
+void set_should_shutdown(bool shutdown) {
+    TraceTool::should_shutdown = shutdown;
+}
 
 void TRX_START() {
 #ifdef MONITOR
@@ -197,8 +208,7 @@ TraceTool *TraceTool::get_instance() {
 #ifdef LATENCY
         /* Create a background thread for dumping function running time
            and latency data. */
-        pthread_t write_thread;
-        pthread_create(&write_thread, NULL, check_write_log, NULL);
+        pthread_create(&back_thread, NULL, check_write_log, NULL);
 #endif
     }
     return instance;
@@ -245,7 +255,9 @@ void *TraceTool::check_write_log(void *arg) {
             log_file << "Long time no query." << endl;
             /* Create a new TraceTool instance. */
             TraceTool *old_instance = instance;
-            instance = new TraceTool;
+            if (!should_shutdown) {
+                instance = new TraceTool;
+            }
 
             /* Reset the global transaction ID. */
             transaction_id = 0;
@@ -255,6 +267,10 @@ void *TraceTool::check_write_log(void *arg) {
             log_file << "Writing data to file" << endl;
             old_instance->write_log();
             delete old_instance;
+
+            if (should_shutdown) {
+                break;
+            }
         }
     }
     return NULL;

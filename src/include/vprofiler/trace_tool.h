@@ -1,6 +1,8 @@
 #ifndef MY_TRACE_TOOL_H
 #define MY_TRACE_TOOL_H
 
+#include <pthread.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -14,9 +16,9 @@ typedef unsigned long int ulint;
 /** The global transaction id counter */
 extern ulint transaction_id;
 
-/********************************************************************//**
-To break down the variance of a function, we need to trace the running
-time of a function and the functions it calls. */
+pthread_t *get_thread();
+
+void set_should_shutdown(bool shutdown);
 
 void TRX_START();
 

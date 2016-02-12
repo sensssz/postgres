@@ -24,6 +24,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <pthread.h>
 
 #include "vprofiler/trace_tool.h"
 #ifdef HAVE_SYS_SELECT_H
@@ -190,6 +191,7 @@ static bool IsTransactionStmtList(List *parseTrees);
 static void drop_unnamed_stmt(void);
 static void SigHupHandler(SIGNAL_ARGS);
 static void log_disconnections(int code, Datum arg);
+static void trace_disconnections(int code, Datum arg);
 
 
 /* ----------------------------------------------------------------
@@ -3744,6 +3746,8 @@ PostgresMain(int argc, char *argv[],
 	if (IsUnderPostmaster && Log_disconnections)
 		on_proc_exit(log_disconnections, 0);
 
+    on_proc_exit(trace_disconnections, 0);
+
 	/* Perform initialization specific to a WAL sender process. */
 	if (am_walsender)
 		InitWalSender();
@@ -4476,4 +4480,14 @@ log_disconnections(int code, Datum arg)
 					hours, minutes, seconds, msecs,
 					port->user_name, port->database_name, port->remote_host,
 				  port->remote_port[0] ? " port=" : "", port->remote_port)));
+}
+
+/*
+ * on_proc_exit handler for tracing tool
+ */
+static void
+trace_disconnections(int code, Datum arg)
+{
+    set_should_shutdown(true);
+    pthread_join(get_thread(), NULL);
 }
