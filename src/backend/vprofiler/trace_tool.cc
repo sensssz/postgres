@@ -127,7 +127,7 @@ static __thread timespec call_end;
 void set_id(int id) {
     TraceTool::get_instance()->id = id;
     if (!TraceTool::log_file.is_open()) {
-        TraceTool::log_file.open("logs/log_file_" + to_string(id), ofstream::app);
+        TraceTool::log_file.open("logs/log_file_" + to_string(id));
     }
 }
 
@@ -161,14 +161,14 @@ void COMMIT(bool successful) {
 void PATH_INC() {
 #ifdef MONITOR
     TraceTool::get_instance()->path_count++;
-    TraceTool::log_file << "Incrementing path_count to " << TraceTool::get_instance()->path_count;
+    TraceTool::log_file << "Incrementing path_count to " << TraceTool::get_instance()->path_count << endl;
 #endif
 }
 
 void PATH_DEC() {
 #ifdef MONITOR
     TraceTool::get_instance()->path_count--;
-    TraceTool::log_file << "Decrementing path_count to " << TraceTool::get_instance()->path_count;
+    TraceTool::log_file << "Decrementing path_count to " << TraceTool::get_instance()->path_count << endl;
 #endif
 }
 
