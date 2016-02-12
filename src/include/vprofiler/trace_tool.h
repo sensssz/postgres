@@ -24,7 +24,7 @@ void set_id(int id);
 
 int get_thread_id();
 
-void log(const char *command);
+void log_command(const char *command);
 
 void TRX_START();
 

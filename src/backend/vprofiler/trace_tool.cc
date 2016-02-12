@@ -145,7 +145,7 @@ void set_should_shutdown(bool shutdown) {
     TraceTool::should_shutdown = shutdown;
 }
 
-void log(const char *command) {
+void log_command(const char *command) {
     TraceTool::get_instance()->log_file << "Execute " << command << endl;
 }
 
