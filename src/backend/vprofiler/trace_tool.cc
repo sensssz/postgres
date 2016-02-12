@@ -16,7 +16,7 @@ using std::string;
 using std::to_string;
 
 #define TARGET_PATH_COUNT 1
-#define NUMBER_OF_FUNCTIONS 33
+#define NUMBER_OF_FUNCTIONS 34
 #define LATENCY
 #define MONITOR
 
@@ -242,7 +242,9 @@ TraceTool::TraceTool() : function_times() {
 }
 
 bool TraceTool::should_monitor() {
-//    log_file << "Should monitor: " << (path_count == TARGET_PATH_COUNT) << endl;
+    if (path_count != TARGET_PATH_COUNT) {
+        log_file << path_count << endl;
+    }
     return path_count == TARGET_PATH_COUNT;
 }
 
