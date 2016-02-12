@@ -160,15 +160,15 @@ void COMMIT(bool successful) {
 
 void PATH_INC() {
 #ifdef MONITOR
-    TraceTool::log_file << "Incrementing path_count";
     TraceTool::get_instance()->path_count++;
+    TraceTool::log_file << "Incrementing path_count to " << TraceTool::get_instance()->path_count;
 #endif
 }
 
 void PATH_DEC() {
 #ifdef MONITOR
-    TraceTool::log_file << "Decrementing path_count";
     TraceTool::get_instance()->path_count--;
+    TraceTool::log_file << "Decrementing path_count to " << TraceTool::get_instance()->path_count;
 #endif
 }
 
@@ -244,9 +244,9 @@ TraceTool::TraceTool() : function_times() {
 }
 
 bool TraceTool::should_monitor() {
-    if (path_count != TARGET_PATH_COUNT) {
-        log_file << path_count << endl;
-    }
+//    if (path_count != TARGET_PATH_COUNT) {
+//        log_file << path_count << endl;
+//    }
     return path_count == TARGET_PATH_COUNT;
 }
 
