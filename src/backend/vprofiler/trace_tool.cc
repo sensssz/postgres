@@ -219,6 +219,7 @@ TraceTool *TraceTool::get_instance() {
         pthread_create(&back_thread, NULL, check_write_log, NULL);
 #endif
     }
+    log_file << "Thread " << pthread_self() << " is getting the instance" << endl;
     return instance;
 }
 
