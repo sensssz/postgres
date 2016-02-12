@@ -249,16 +249,13 @@ bool TraceTool::should_monitor() {
 }
 
 void *TraceTool::check_write_log(void *arg) {
-    log_file << "Thread is started" << endl;
     /* Runs in an infinite loop and for every 5 seconds,
        check if there's any query comes in. If not, then
        dump data to log files. */
     while (true) {
-        log_file << "Checking" << endl;
         sleep(5);
         timespec now = get_time();
         if (now.tv_sec - global_last_query.tv_sec >= 5 && transaction_id > 0) {
-            log_file << "Long time no query." << endl;
             /* Create a new TraceTool instance. */
             TraceTool *old_instance = instance;
             if (!should_shutdown) {
@@ -270,7 +267,6 @@ void *TraceTool::check_write_log(void *arg) {
 
             /* Dump data in the old instance to log files and
                reclaim memory. */
-            log_file << "Writing data to file" << endl;
             old_instance->write_log();
             delete old_instance;
         }
