@@ -4487,7 +4487,6 @@ log_disconnections(int code, Datum arg)
 static void
 trace_disconnections(int code, Datum arg)
 {
-    ereport(LOG, (errmsg("Exiting process %ld", (long) getpid())));
     set_should_shutdown(true);
     pthread_join(get_thread(), NULL);
 }

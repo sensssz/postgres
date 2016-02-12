@@ -20,6 +20,8 @@ pthread_t get_thread();
 
 void set_should_shutdown(bool shutdown);
 
+void set_id(int id);
+
 void TRX_START();
 
 void TRX_END();

@@ -55,6 +55,8 @@ public:
     static bool should_shutdown;
     static pthread_t back_thread;
 
+    int id;
+
     /********************************************************************//**
     The Singleton pattern. Used for getting the instance of this class. */
     static TraceTool *get_instance();
@@ -122,6 +124,10 @@ static __thread timespec function_end;
 static __thread timespec call_start;
 static __thread timespec call_end;
 #endif
+
+void set_id(int id) {
+    TraceTool::get_instance()->id = id;
+}
 
 pthread_t get_thread() {
     return TraceTool::back_thread;
@@ -232,8 +238,7 @@ TraceTool::TraceTool() : function_times() {
 
     srand(time(0));
     if (!log_file.is_open()) {
-        log_file.open("logs/log_file_" + to_string(getpid()), ofstream::app);
-        log_file << "File is open now" << endl;
+        log_file.open("logs/log_file_" + to_string(id), ofstream::app);
     }
 }
 
@@ -332,6 +337,7 @@ void TraceTool::end_transaction() {
     if (!commit_successful) {
         transaction_start_times[current_transaction_id] = 0;
     }
+    is_commit = false;
 #endif
 }
 
@@ -344,7 +350,7 @@ void TraceTool::add_record(int function_index, long duration) {
 
 void TraceTool::write_latency(string dir) {
     ofstream tpcc_log;
-    tpcc_log.open(dir + "tpcc_" + to_string(getpid()));
+    tpcc_log.open(dir + "tpcc_" + to_string(id));
 
     for (ulint index = 0; index < transaction_start_times.size(); ++index) {
         ulint start_time = transaction_start_times[index];

@@ -126,6 +126,7 @@
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
+#include "vprofiler/trace_tool.h"
 
 #ifdef EXEC_BACKEND
 #include "storage/spin.h"
@@ -397,7 +398,7 @@ static void BackendInitialize(Port *port);
 static void BackendRun(Port *port) pg_attribute_noreturn();
 static void ExitPostmaster(int status) pg_attribute_noreturn();
 static int	ServerLoop(void);
-static int	BackendStartup(Port *port);
+static int	BackendStartup(Port *port, int id);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);
 static void processCancelRequest(Port *port, void *pkt);
 static int	initMasks(fd_set *rmask);
@@ -1614,6 +1615,7 @@ ServerLoop(void)
 
 	nSockets = initMasks(&readmask);
 
+	int id = 0;
 	for (;;)
 	{
 		fd_set		rmask;
@@ -1687,7 +1689,7 @@ ServerLoop(void)
 					port = ConnCreate(ListenSocket[i]);
 					if (port)
 					{
-						BackendStartup(port);
+						BackendStartup(port, id++);
 
 						/*
 						 * We no longer need the open socket or port structure
@@ -3869,7 +3871,7 @@ TerminateChildren(int signal)
  * Note: if you change this code, also consider StartAutovacuumWorker.
  */
 static int
-BackendStartup(Port *port)
+BackendStartup(Port *port, int id)
 {
 	Backend    *bn;				/* for backend cleanup */
 	pid_t		pid;
@@ -3927,6 +3929,8 @@ BackendStartup(Port *port)
 
 		/* Perform additional initialization and collect startup packet */
 		BackendInitialize(port);
+
+		set_id(id);
 
 		/* And run the backend */
 		BackendRun(port);
