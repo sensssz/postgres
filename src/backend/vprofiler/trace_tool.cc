@@ -312,7 +312,7 @@ void TraceTool::end_transaction() {
 #ifdef LATENCY
     timespec now = get_time();
     long latency = difftime(trans_start, now);
-    function_times.back()[current_transaction_id] = latency;
+    function_times.back()[current_transaction_id] = (int) latency;
     if (!commit_successful) {
         transaction_start_times[current_transaction_id] = 0;
     }
