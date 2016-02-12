@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <string>
 
 using std::ifstream;
 using std::ofstream;
@@ -13,6 +14,7 @@ using std::ofstream;
 using std::vector;
 using std::endl;
 using std::string;
+using std::to_string;
 
 #define TARGET_PATH_COUNT 1
 #define NUMBER_OF_FUNCTIONS 33
@@ -24,13 +26,7 @@ ulint transaction_id = 0;
 class TraceTool {
 private:
     static TraceTool *instance;
-    /*!< Instance for the Singleton pattern. */
-    static pthread_mutex_t instance_mutex;
-    /*!< Mutex for protecting instance. */
-
     static timespec global_last_query;
-    /*!< Time when MySQL receives the most recent query. */
-    static pthread_mutex_t last_query_mutex;
 
     static ofstream log_file;
 
@@ -46,8 +42,6 @@ private:
 
     TraceTool(TraceTool const &) { };
 public:
-    static pthread_rwlock_t data_lock;
-    /*!< A read-write lock for protecting function_times. */
     static __thread ulint current_transaction_id;
     /*!< Each thread can execute only one transaction at
                                                           a time. This is the ID of the current transactions. */
@@ -107,12 +101,9 @@ public:
 };
 
 TraceTool *TraceTool::instance = NULL;
-pthread_mutex_t TraceTool::instance_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_rwlock_t TraceTool::data_lock = PTHREAD_RWLOCK_INITIALIZER;
 __thread ulint TraceTool::current_transaction_id = 0;
 
 timespec TraceTool::global_last_query;
-pthread_mutex_t TraceTool::last_query_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 ofstream TraceTool::log_file;
 
@@ -202,19 +193,13 @@ bool TRACE_END(int index) {
 Get the current TraceTool instance. */
 TraceTool *TraceTool::get_instance() {
     if (instance == NULL) {
-        pthread_mutex_lock(&instance_mutex);
-        /* Check instance again after entering the critical section
-           to prevent double initialization. */
-        if (instance == NULL) {
-            instance = new TraceTool;
+        instance = new TraceTool;
 #ifdef LATENCY
-            /* Create a background thread for dumping function running time
-               and latency data. */
-            pthread_t write_thread;
-            pthread_create(&write_thread, NULL, check_write_log, NULL);
+        /* Create a background thread for dumping function running time
+           and latency data. */
+        pthread_t write_thread;
+        pthread_create(&write_thread, NULL, check_write_log, NULL);
 #endif
-        }
-        pthread_mutex_unlock(&instance_mutex);
     }
     return instance;
 }
@@ -237,7 +222,7 @@ TraceTool::TraceTool() : function_times() {
 
     srand(time(0));
     if (!log_file.is_open()) {
-        log_file.open("log_file", ofstream::app);
+        log_file.open("log_file_" + to_string(getpid()), ofstream::app);
         log_file << "File is open now" << endl;
     }
 }
@@ -300,10 +285,8 @@ void TraceTool::start_trx() {
         current_transaction_id = 0;
     }
 #ifdef LATENCY
-    trans_start = get_time();
     commit_successful = true;
     /* Use a write lock here because we are appending content to the vector. */
-    pthread_rwlock_wrlock(&data_lock);
     current_transaction_id = transaction_id++;
     transaction_start_times[current_transaction_id] = now_micro();
     for (vector<vector<int> >::iterator iterator = function_times.begin();
@@ -312,10 +295,8 @@ void TraceTool::start_trx() {
         iterator->push_back(0);
     }
     transaction_start_times.push_back(0);
-    pthread_rwlock_unlock(&data_lock);
-    pthread_mutex_lock(&last_query_mutex);
     clock_gettime(CLOCK_REALTIME, &global_last_query);
-    pthread_mutex_unlock(&last_query_mutex);
+    trans_start = get_time();
 #endif
 }
 
@@ -331,12 +312,10 @@ void TraceTool::end_transaction() {
 #ifdef LATENCY
     timespec now = get_time();
     long latency = difftime(trans_start, now);
-    pthread_rwlock_rdlock(&data_lock);
     function_times.back()[current_transaction_id] = latency;
     if (!commit_successful) {
         transaction_start_times[current_transaction_id] = 0;
     }
-    pthread_rwlock_unlock(&data_lock);
 #endif
 }
 
@@ -344,16 +323,13 @@ void TraceTool::add_record(int function_index, long duration) {
     if (current_transaction_id > transaction_id) {
         current_transaction_id = 0;
     }
-    pthread_rwlock_rdlock(&data_lock);
     function_times[function_index][current_transaction_id] += duration;
-    pthread_rwlock_unlock(&data_lock);
 }
 
 void TraceTool::write_latency(string dir) {
     ofstream tpcc_log;
-    tpcc_log.open(dir + "tpcc");
+    tpcc_log.open(dir + "tpcc_" + to_string(getpid()));
 
-    pthread_rwlock_wrlock(&data_lock);
     for (ulint index = 0; index < transaction_start_times.size(); ++index) {
         ulint start_time = transaction_start_times[index];
         if (start_time > 0) {
@@ -375,7 +351,6 @@ void TraceTool::write_latency(string dir) {
         vector<int>().swap(*iterator);
     }
     vector<vector<int> >().swap(function_times);
-    pthread_rwlock_unlock(&data_lock);
     tpcc_log.close();
 }
 
