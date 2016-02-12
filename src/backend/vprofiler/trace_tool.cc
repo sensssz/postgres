@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <set>
 
 using std::ifstream;
 using std::ofstream;
@@ -14,6 +15,7 @@ using std::vector;
 using std::endl;
 using std::string;
 using std::to_string;
+using std::set;
 
 #define TARGET_PATH_COUNT 0
 #define NUMBER_OF_FUNCTIONS 34
@@ -53,6 +55,7 @@ public:
     static bool should_shutdown;
     static pthread_t back_thread;
     static ofstream log_file;
+    static set<pthread_t> threads;
 
     int id;
 
@@ -112,6 +115,8 @@ __thread int TraceTool::path_count = 0;
 __thread bool TraceTool::is_commit = false;
 __thread bool TraceTool::commit_successful = true;
 __thread timespec TraceTool::trans_start;
+
+set<pthread_t> TraceTool::threads;
 
 bool TraceTool::should_shutdown = false;
 pthread_t TraceTool::back_thread;
@@ -219,7 +224,11 @@ TraceTool *TraceTool::get_instance() {
         pthread_create(&back_thread, NULL, check_write_log, NULL);
 #endif
     }
-    log_file << "Thread " << pthread_self() << " is getting the instance" << endl;
+    pthread_t thread = pthread_self();
+    if (threads.find(thread) != threads.end()) {
+        log_file << "Thread " << thread << " is getting the instance" << endl;
+        threads.insert(thread);
+    }
     return instance;
 }
 
