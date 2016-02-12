@@ -1874,10 +1874,8 @@ exec_execute_message(const char *portal_name, long max_rows)
 		return;
 	}
 
-    if (get_thread_id() == 0) {
         ereport(LOG,
                 (errmsg("execute %s", portal->commandTag)));
-    }
 
     if (strncmp(portal->commandTag, "BEGIN", strlen("BEGIN")) == 0) {
         TRX_START();

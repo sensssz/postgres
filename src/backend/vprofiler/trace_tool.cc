@@ -145,6 +145,10 @@ void set_should_shutdown(bool shutdown) {
     TraceTool::should_shutdown = shutdown;
 }
 
+void log(const char *command) {
+    TraceTool::get_instance()->log_file << "Execute " << command << endl;
+}
+
 void TRX_START() {
 #ifdef MONITOR
     TraceTool::get_instance()->start_trx();
