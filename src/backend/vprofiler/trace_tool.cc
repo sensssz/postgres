@@ -55,7 +55,6 @@ public:
     static bool should_shutdown;
     static pthread_t back_thread;
     static ofstream log_file;
-    static set<pthread_t> threads;
 
     int id;
 
@@ -115,8 +114,6 @@ __thread int TraceTool::path_count = 0;
 __thread bool TraceTool::is_commit = false;
 __thread bool TraceTool::commit_successful = true;
 __thread timespec TraceTool::trans_start;
-
-set<pthread_t> TraceTool::threads;
 
 bool TraceTool::should_shutdown = false;
 pthread_t TraceTool::back_thread;
@@ -223,14 +220,6 @@ TraceTool *TraceTool::get_instance() {
            and latency data. */
         pthread_create(&back_thread, NULL, check_write_log, NULL);
 #endif
-    }
-    pthread_t thread = pthread_self();
-    if (threads.find(thread) == threads.end()) {
-        log_file << "Thread " << thread << " gets the instance" << endl;
-        threads.insert(thread);
-    }
-    if (threads.size() > 1) {
-        log_file << threads.size() << endl;
     }
     return instance;
 }
@@ -359,6 +348,7 @@ void TraceTool::add_record(int function_index, long duration) {
 }
 
 void TraceTool::write_latency(string dir) {
+    log_file << "Thread is " << pthread_self() << endl;
     ofstream tpcc_log;
     tpcc_log.open(dir + "tpcc_" + to_string(id));
 
