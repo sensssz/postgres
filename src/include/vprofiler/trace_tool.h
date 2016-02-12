@@ -16,7 +16,7 @@ typedef unsigned long int ulint;
 /** The global transaction id counter */
 extern ulint transaction_id;
 
-pthread_t *get_thread();
+pthread_t get_thread();
 
 void set_should_shutdown(bool shutdown);
 

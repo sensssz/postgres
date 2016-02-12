@@ -4262,7 +4262,6 @@ PostgresMain(int argc, char *argv[],
 				 * it will fail to be called during other backend-shutdown
 				 * scenarios.
 				 */
-				ereport(LOG, (errmsg("Exiting process %ld", getpid())));
 				proc_exit(0);
 
 			case 'd':			/* copy data */
@@ -4488,6 +4487,7 @@ log_disconnections(int code, Datum arg)
 static void
 trace_disconnections(int code, Datum arg)
 {
+    ereport(LOG, (errmsg("Exiting process %ld", (long) getpid())));
     set_should_shutdown(true);
     pthread_join(get_thread(), NULL);
 }

@@ -113,7 +113,7 @@ __thread bool TraceTool::commit_successful = true;
 __thread timespec TraceTool::trans_start;
 
 bool TraceTool::should_shutdown = false;
-pthread_t back_thread;
+pthread_t TraceTool::back_thread;
 
 /* Define MONITOR if needs to trace running time of functions. */
 #ifdef MONITOR
@@ -123,8 +123,8 @@ static __thread timespec call_start;
 static __thread timespec call_end;
 #endif
 
-pthread_t *get_thread() {
-    return &TraceTool::back_thread;
+pthread_t get_thread() {
+    return TraceTool::back_thread;
 }
 
 void set_should_shutdown(bool shutdown) {
