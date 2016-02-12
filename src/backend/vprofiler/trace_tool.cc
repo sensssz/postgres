@@ -275,7 +275,7 @@ void *TraceTool::check_write_log(void *arg) {
             delete old_instance;
         }
 
-        if (should_shutdown) {
+        if (now.tv_sec - global_last_query.tv_sec >= 5 && should_shutdown) {
             break;
         }
     }
