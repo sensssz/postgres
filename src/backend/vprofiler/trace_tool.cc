@@ -27,8 +27,6 @@ private:
     static TraceTool *instance;
     static timespec global_last_query;
 
-    static ofstream log_file;
-
     static __thread timespec trans_start;
     /*!< Start time of the current transaction. */
     vector<vector<int> > function_times;
@@ -54,6 +52,7 @@ public:
     static __thread bool commit_successful; /*!< True if the current transaction successfully commits. */
     static bool should_shutdown;
     static pthread_t back_thread;
+    static ofstream log_file;
 
     int id;
 
@@ -127,6 +126,9 @@ static __thread timespec call_end;
 
 void set_id(int id) {
     TraceTool::get_instance()->id = id;
+    if (!TraceTool::log_file.is_open()) {
+        TraceTool::log_file.open("logs/log_file_" + to_string(id), ofstream::app);
+    }
 }
 
 pthread_t get_thread() {
@@ -237,9 +239,6 @@ TraceTool::TraceTool() : function_times() {
     transaction_start_times.push_back(0);
 
     srand(time(0));
-    if (!log_file.is_open()) {
-        log_file.open("logs/log_file_" + to_string(id), ofstream::app);
-    }
 }
 
 bool TraceTool::should_monitor() {
