@@ -222,7 +222,7 @@ TraceTool::TraceTool() : function_times() {
 
     srand(time(0));
     if (!log_file.is_open()) {
-        log_file.open("log_file_" + to_string(getpid()), ofstream::app);
+        log_file.open("logs/log_file_" + to_string(getpid()), ofstream::app);
         log_file << "File is open now" << endl;
     }
 }
