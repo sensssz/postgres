@@ -160,12 +160,14 @@ void COMMIT(bool successful) {
 
 void PATH_INC() {
 #ifdef MONITOR
+    TraceTool::log_file << "Incrementing path_count";
     TraceTool::get_instance()->path_count++;
 #endif
 }
 
 void PATH_DEC() {
 #ifdef MONITOR
+    TraceTool::log_file << "Decrementing path_count";
     TraceTool::get_instance()->path_count--;
 #endif
 }
