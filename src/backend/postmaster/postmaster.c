@@ -4256,7 +4256,6 @@ BackendRun(Port *port)
 	MemoryContextSwitchTo(TopMemoryContext);
 
 	PostgresMain(ac, av, port->database_name, port->user_name);
-	ereport(LOG, (errmsg("Exiting process %ld", getpid())));
 }
 
 

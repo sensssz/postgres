@@ -1872,8 +1872,8 @@ exec_execute_message(const char *portal_name, long max_rows)
 		return;
 	}
 
-    ereport(LOG,
-            (errmsg("execute %s", portal->commandTag)));
+//    ereport(LOG,
+//            (errmsg("execute %s", portal->commandTag)));
 
     if (strncmp(portal->commandTag, "BEGIN", strlen("BEGIN")) == 0) {
         TRX_START();
@@ -4258,6 +4258,7 @@ PostgresMain(int argc, char *argv[],
 				 * it will fail to be called during other backend-shutdown
 				 * scenarios.
 				 */
+				ereport(LOG, (errmsg("Exiting process %ld", getpid())));
 				proc_exit(0);
 
 			case 'd':			/* copy data */
