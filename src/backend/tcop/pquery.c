@@ -13,6 +13,7 @@
  *-------------------------------------------------------------------------
  */
 
+#include <vprofiler/trace_tool.h>
 #include "postgres.h"
 
 #include "access/xact.h"
@@ -809,8 +810,15 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 				break;
 
 			case PORTAL_MULTI_QUERY:
+
+				if (PATH_GET() == 1) {
+					PATH_SET(2);
+				}
 				PortalRunMulti(portal, isTopLevel,
 							   dest, altdest, completionTag);
+				if(PATH_GET() == 2) {
+					PATH_SET(1);
+				}
 
 				/* Prevent portal's commands from being re-executed */
 				MarkPortalDone(portal);
