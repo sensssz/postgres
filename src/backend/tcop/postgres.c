@@ -1990,12 +1990,14 @@ exec_execute_message(const char *portal_name, long max_rows)
 	if (max_rows <= 0)
 		max_rows = FETCH_ALL;
 
+    PATH_INC();
 	completed = PortalRun(portal,
 						  max_rows,
 						  true, /* always top level */
 						  receiver,
 						  receiver,
 						  completionTag);
+    PATH_DEC();
 
 	(*receiver->rDestroy) (receiver);
 
@@ -2007,9 +2009,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 			 * If this was a transaction control statement, commit it.  We
 			 * will start a new xact command for the next command (if any).
 			 */
-			PATH_INC();
 			finish_xact_command();
-			PATH_DEC();
 		}
 		else
 		{
