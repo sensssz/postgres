@@ -183,7 +183,7 @@ void PATH_DEC() {
 }
 
 void TRACE_FUNCTION_START() {
-//    TraceTool::get_instance()->log_file << "Function starts" << endl;
+    TraceTool::get_instance()->log_file << "Function starts" << endl;
 #ifdef MONITOR
     if (TraceTool::should_monitor()) {
         clock_gettime(CLOCK_REALTIME, &function_start);
@@ -198,7 +198,7 @@ void TRACE_FUNCTION_END() {
         long duration = TraceTool::difftime(function_start, function_end);
         TraceTool::get_instance()->add_record(0, duration);
     }
-//    TraceTool::get_instance()->log_file << "Function ends" << endl;
+    TraceTool::get_instance()->log_file << "Function ends" << endl;
 #endif
 }
 
