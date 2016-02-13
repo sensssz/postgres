@@ -146,7 +146,7 @@ void set_should_shutdown(bool shutdown) {
 }
 
 void log_command(const char *command) {
-    TraceTool::get_instance()->log_file << command << endl;
+    TraceTool::get_instance()->log_file << "[Thread " << pthread_self() << "]: " << command << endl;
 }
 
 void TRX_START() {
