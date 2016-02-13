@@ -18,7 +18,7 @@ extern ulint transaction_id;
 
 pthread_t get_thread();
 
-void set_should_shutdown(bool shutdown);
+void set_should_shutdown(int shutdown);
 
 void set_id(int id);
 
@@ -30,7 +30,7 @@ void TRX_START();
 
 void TRX_END();
 
-void COMMIT(bool successful);
+void COMMIT(int successful);
 
 void PATH_SET(int path_count);
 
@@ -50,11 +50,11 @@ void TRACE_FUNCTION_END();
 
 /********************************************************************//**
 This function marks the start of a child function call. */
-bool TRACE_START();
+int TRACE_START();
 
 /********************************************************************//**
 This function marks the end of a child function call. */
-bool TRACE_END(
+int TRACE_END(
   int index);   /*!< Index of the child function call. */
 
 #ifdef __cplusplus

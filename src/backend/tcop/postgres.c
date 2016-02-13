@@ -4492,6 +4492,6 @@ log_disconnections(int code, Datum arg)
 static void
 trace_disconnections(int code, Datum arg)
 {
-    set_should_shutdown(true);
+    set_should_shutdown(1);
     pthread_join(get_thread(), NULL);
 }

@@ -141,7 +141,7 @@ pthread_t get_thread() {
     return TraceTool::back_thread;
 }
 
-void set_should_shutdown(bool shutdown) {
+void set_should_shutdown(int shutdown) {
     TraceTool::should_shutdown = shutdown;
 }
 
@@ -161,7 +161,7 @@ void TRX_END() {
 #endif
 }
 
-void COMMIT(bool successful) {
+void COMMIT(int successful) {
 #ifdef MONITOR
     TraceTool::get_instance()->is_commit = true;
     TraceTool::get_instance()->commit_successful = successful;
@@ -214,16 +214,16 @@ void TRACE_FUNCTION_END() {
 #endif
 }
 
-bool TRACE_START() {
+int TRACE_START() {
 #ifdef MONITOR
     if (TraceTool::should_monitor()) {
         clock_gettime(CLOCK_REALTIME, &call_start);
     }
 #endif
-    return false;
+    return 0;
 }
 
-bool TRACE_END(int index) {
+int TRACE_END(int index) {
 #ifdef MONITOR
     if (TraceTool::should_monitor()) {
         clock_gettime(CLOCK_REALTIME, &call_end);
@@ -231,7 +231,7 @@ bool TRACE_END(int index) {
         TraceTool::get_instance()->add_record(index, duration);
     }
 #endif
-    return false;
+    return 0;
 }
 
 /********************************************************************//**
