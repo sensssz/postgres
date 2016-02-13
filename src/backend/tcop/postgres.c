@@ -1874,8 +1874,6 @@ exec_execute_message(const char *portal_name, long max_rows)
 		return;
 	}
 
-    log_command(portal->commandTag);
-
     if (strncmp(portal->commandTag, "BEGIN", strlen("BEGIN")) == 0) {
         TRX_START();
     } else if (strncmp(portal->commandTag, "COMMIT", strlen("COMMIT")) == 0) {
@@ -2009,7 +2007,9 @@ exec_execute_message(const char *portal_name, long max_rows)
 			 * If this was a transaction control statement, commit it.  We
 			 * will start a new xact command for the next command (if any).
 			 */
+			PATH_INC();
 			finish_xact_command();
+			PATH_DEC();
 		}
 		else
 		{

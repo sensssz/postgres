@@ -17,8 +17,8 @@ using std::string;
 using std::to_string;
 using std::set;
 
-#define TARGET_PATH_COUNT 0
-#define NUMBER_OF_FUNCTIONS 5
+#define TARGET_PATH_COUNT 1
+#define NUMBER_OF_FUNCTIONS 26
 #define LATENCY
 #define MONITOR
 
@@ -171,6 +171,9 @@ void COMMIT(bool successful) {
 void PATH_INC() {
 #ifdef MONITOR
     TraceTool::get_instance()->path_count++;
+    if (TraceTool::get_instance()->path_count > 1) {
+        TraceTool::get_instance()->log_file << "Path increment is no working correctly" << endl;
+    }
 #endif
 }
 
