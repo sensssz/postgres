@@ -385,5 +385,7 @@ void TraceTool::write_latency(string dir) {
 }
 
 void TraceTool::write_log() {
-    write_latency("latency/");
+    if (id > 0) {
+        write_latency("latency/");
+    }
 }
