@@ -1990,16 +1990,14 @@ exec_execute_message(const char *portal_name, long max_rows)
 	if (max_rows <= 0)
 		max_rows = FETCH_ALL;
 
-    PATH_INC();
-    log_command("Portal starts");
+    PATH_SET(1);
 	completed = PortalRun(portal,
 						  max_rows,
 						  true, /* always top level */
 						  receiver,
 						  receiver,
 						  completionTag);
-    log_command("Portal ends");
-    PATH_DEC();
+    PATH_SET(0);
 
 	(*receiver->rDestroy) (receiver);
 

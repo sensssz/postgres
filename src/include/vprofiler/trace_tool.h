@@ -32,6 +32,8 @@ void TRX_END();
 
 void COMMIT(bool successful);
 
+void PATH_SET(int path_count);
+
 void PATH_INC();
 
 void PATH_DEC();
