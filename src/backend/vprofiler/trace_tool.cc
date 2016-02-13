@@ -146,7 +146,7 @@ void set_should_shutdown(bool shutdown) {
 }
 
 void log_command(const char *command) {
-    TraceTool::get_instance()->log_file << "Execute " << command << endl;
+    TraceTool::get_instance()->log_file << command << endl;
 }
 
 void TRX_START() {
@@ -171,19 +171,19 @@ void COMMIT(bool successful) {
 void PATH_INC() {
 #ifdef MONITOR
     TraceTool::get_instance()->path_count++;
-    TraceTool::get_instance()->log_file << pthread_self() << " increments path_count to " << TraceTool::get_instance()->path_count << endl;
+//    TraceTool::get_instance()->log_file << pthread_self() << " increments path_count to " << TraceTool::get_instance()->path_count << endl;
 #endif
 }
 
 void PATH_DEC() {
 #ifdef MONITOR
     TraceTool::get_instance()->path_count--;
-    TraceTool::get_instance()->log_file << pthread_self() << " decrements path_count to " << TraceTool::get_instance()->path_count << endl;
+//    TraceTool::get_instance()->log_file << pthread_self() << " decrements path_count to " << TraceTool::get_instance()->path_count << endl;
 #endif
 }
 
 void TRACE_FUNCTION_START() {
-    TraceTool::get_instance()->log_file << "Function starts" << endl;
+//    TraceTool::get_instance()->log_file << "Function starts" << endl;
 #ifdef MONITOR
     if (TraceTool::should_monitor()) {
         clock_gettime(CLOCK_REALTIME, &function_start);
@@ -198,7 +198,7 @@ void TRACE_FUNCTION_END() {
         long duration = TraceTool::difftime(function_start, function_end);
         TraceTool::get_instance()->add_record(0, duration);
     }
-    TraceTool::get_instance()->log_file << "Function ends" << endl;
+//    TraceTool::get_instance()->log_file << "Function ends" << endl;
 #endif
 }
 
