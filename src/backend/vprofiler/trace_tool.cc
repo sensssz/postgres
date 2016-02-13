@@ -192,11 +192,13 @@ void TRACE_FUNCTION_START() {
 
 void TRACE_FUNCTION_END() {
 #ifdef MONITOR
+    TraceTool::get_instance()->log_file << "Function starts" << endl;
     if (TraceTool::should_monitor()) {
         clock_gettime(CLOCK_REALTIME, &function_end);
         long duration = TraceTool::difftime(function_start, function_end);
         TraceTool::get_instance()->add_record(0, duration);
     }
+    TraceTool::get_instance()->log_file << "Function ends" << endl;
 #endif
 }
 
