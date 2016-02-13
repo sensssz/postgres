@@ -1990,14 +1990,12 @@ exec_execute_message(const char *portal_name, long max_rows)
 	if (max_rows <= 0)
 		max_rows = FETCH_ALL;
 
-    PATH_SET(1);
 	completed = PortalRun(portal,
 						  max_rows,
 						  true, /* always top level */
 						  receiver,
 						  receiver,
 						  completionTag);
-    PATH_SET(0);
 
 	(*receiver->rDestroy) (receiver);
 
@@ -2009,7 +2007,9 @@ exec_execute_message(const char *portal_name, long max_rows)
 			 * If this was a transaction control statement, commit it.  We
 			 * will start a new xact command for the next command (if any).
 			 */
+            PATH_SET(1);
 			finish_xact_command();
+            PATH_SET(0);
 		}
 		else
 		{
@@ -2472,7 +2472,13 @@ finish_xact_command(void)
 		ereport(DEBUG3,
 				(errmsg_internal("CommitTransactionCommand")));
 
+        if (PATH_GET() == 1) {
+            PATH_SET(2);
+        }
 		CommitTransactionCommand();
+        if(PATH_GET() == 2) {
+            PATH_SET(1);
+        }
 
 #ifdef MEMORY_CONTEXT_CHECKING
 		/* Check all memory contexts that weren't freed during commit */

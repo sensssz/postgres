@@ -34,6 +34,8 @@ void COMMIT(bool successful);
 
 void PATH_SET(int path_count);
 
+int PATH_GET();
+
 void PATH_INC();
 
 void PATH_DEC();

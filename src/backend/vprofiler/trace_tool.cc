@@ -17,8 +17,8 @@ using std::string;
 using std::to_string;
 using std::set;
 
-#define TARGET_PATH_COUNT 1
-#define NUMBER_OF_FUNCTIONS 26
+#define TARGET_PATH_COUNT 2
+#define NUMBER_OF_FUNCTIONS 31
 #define LATENCY
 #define MONITOR
 
@@ -185,6 +185,12 @@ void PATH_DEC() {
 void PATH_SET(int path_count) {
 #ifdef MONITOR
     TraceTool::get_instance()->path_count = path_count;
+#endif
+}
+
+int PATH_GET() {
+#ifdef MONITOR
+    return TraceTool::get_instance()->path_count;
 #endif
 }
 
