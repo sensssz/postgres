@@ -171,15 +171,14 @@ void COMMIT(bool successful) {
 void PATH_INC() {
 #ifdef MONITOR
     TraceTool::get_instance()->path_count++;
-    if (TraceTool::get_instance()->path_count > 1) {
-        TraceTool::get_instance()->log_file << "Path increment is no working correctly" << endl;
-    }
+    TraceTool::get_instance()->log_file << pthread_self() << " increments path_count to " << TraceTool::get_instance()->path_count << endl;
 #endif
 }
 
 void PATH_DEC() {
 #ifdef MONITOR
     TraceTool::get_instance()->path_count--;
+    TraceTool::get_instance()->log_file << pthread_self() << " decrements path_count to " << TraceTool::get_instance()->path_count << endl;
 #endif
 }
 
