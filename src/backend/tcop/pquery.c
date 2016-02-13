@@ -811,9 +811,7 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 
 			case PORTAL_MULTI_QUERY:
 
-				if (PATH_GET() == 1) {
-					PATH_SET(2);
-				}
+				PATH_SET(2);
 				PortalRunMulti(portal, isTopLevel,
 							   dest, altdest, completionTag);
 				if(PATH_GET() == 2) {
