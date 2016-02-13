@@ -1610,12 +1610,12 @@ ServerLoop(void)
 	int			nSockets;
 	time_t		last_lockfile_recheck_time,
 				last_touch_time;
+	int id = 1;
 
 	last_lockfile_recheck_time = last_touch_time = time(NULL);
 
 	nSockets = initMasks(&readmask);
 
-	int id = 0;
 	for (;;)
 	{
 		fd_set		rmask;
