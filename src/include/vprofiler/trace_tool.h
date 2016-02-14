@@ -26,6 +26,8 @@ int get_thread_id();
 
 void log_command(const char *command);
 
+void QUERY_START();
+
 void TRX_START();
 
 void TRX_END();

@@ -4096,6 +4096,7 @@ PostgresMain(int argc, char *argv[],
 
 			case 'E':			/* execute */
 				{
+                    QUERY_START();
 					const char *portal_name;
 					int			max_rows;
 

@@ -27,7 +27,6 @@ ulint transaction_id = 0;
 class TraceTool {
 private:
     static TraceTool *instance;
-    static timespec global_last_query;
 
     static __thread timespec trans_start;
     /*!< Start time of the current transaction. */
@@ -41,6 +40,7 @@ private:
 
     TraceTool(TraceTool const &) { };
 public:
+    static timespec global_last_query;
     static __thread ulint current_transaction_id;
     /*!< Each thread can execute only one transaction at
                                                           a time. This is the ID of the current transactions. */
@@ -147,6 +147,10 @@ void set_should_shutdown(int shutdown) {
 
 void log_command(const char *command) {
     TraceTool::get_instance()->log_file << "[Thread " << pthread_self() << "]: " << command << endl;
+}
+
+void QUERY_START() {
+    TraceTool::get_instance()->global_last_query = TraceTool::get_time();
 }
 
 void TRX_START() {
