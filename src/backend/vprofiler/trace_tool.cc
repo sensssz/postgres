@@ -404,7 +404,7 @@ void TraceTool::write_latency(string dir) {
 }
 
 void TraceTool::write_log() {
-    log_file << "Write log on instance " << instance << endl;
+    log_file << "Write log on instance " << instance << ", id is " << id << endl;
     if (id > 0) {
         write_latency("latency/");
     }
