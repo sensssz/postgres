@@ -35,6 +35,7 @@
  *
  *-------------------------------------------------------------------------
  */
+#include <vprofiler/trace_tool.h>
 #include "postgres.h"
 
 #include "access/htup_details.h"
@@ -280,10 +281,14 @@ void
 ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count)
 {
-	if (ExecutorRun_hook)
-		(*ExecutorRun_hook) (queryDesc, direction, count);
-	else
+	if (ExecutorRun_hook) {
+		log_command("Is a hook");
+		(*ExecutorRun_hook)(queryDesc, direction, count);
+	}
+	else {
 		standard_ExecutorRun(queryDesc, direction, count);
+		log_command("Standard executorRun");
+	}
 }
 
 void
