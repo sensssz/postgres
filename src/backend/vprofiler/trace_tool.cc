@@ -286,12 +286,10 @@ void *TraceTool::check_write_log(void *arg) {
         sleep(5);
         log_file << "Checking," << global_last_query.tv_sec << ":" << global_last_query.tv_nsec << "," << transaction_id << endl;
         timespec now = get_time();
-        if (now.tv_sec - global_last_query.tv_sec >= 5 && transaction_id > 0) {
+        if (now.tv_sec - global_last_query.tv_sec >= 10 && transaction_id > 0) {
             /* Create a new TraceTool instance. */
             TraceTool *old_instance = instance;
-            if (!should_shutdown) {
-                instance = new TraceTool;
-            }
+            instance = new TraceTool;
 
             /* Reset the global transaction ID. */
             transaction_id = 0;
@@ -406,6 +404,7 @@ void TraceTool::write_latency(string dir) {
 }
 
 void TraceTool::write_log() {
+    log_file << "Write log on instance " << instance << endl;
     if (id > 0) {
         write_latency("latency/");
     }
