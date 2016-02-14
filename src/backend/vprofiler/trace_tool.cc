@@ -284,6 +284,7 @@ void *TraceTool::check_write_log(void *arg) {
        dump data to log files. */
     while (true) {
         sleep(5);
+        log_file << "Checking," << global_last_query.tv_sec << ":" << global_last_query.tv_nsec << "," << transaction_id << endl;
         timespec now = get_time();
         if (now.tv_sec - global_last_query.tv_sec >= 10 && transaction_id > 0) {
             /* Create a new TraceTool instance. */
@@ -404,6 +405,7 @@ void TraceTool::write_latency(string dir) {
 }
 
 void TraceTool::write_log() {
+    log_file << "Write log on instance " << instance << ", id is " << id << endl;
     if (id > 0) {
         write_latency("latency/");
     }
