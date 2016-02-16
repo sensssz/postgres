@@ -42,6 +42,8 @@ void PATH_INC();
 
 void PATH_DEC();
 
+timespec get_trx_start();
+
 /********************************************************************//**
 This function marks the start of a function call */
 void TRACE_FUNCTION_START();

@@ -85,6 +85,7 @@
 #include "storage/proc.h"
 #include "storage/spin.h"
 #include "utils/memutils.h"
+#include <unistd.h>
 
 #ifdef LWLOCK_STATS
 #include "utils/hsearch.h"
@@ -916,6 +917,7 @@ LWLockQueueSelf(LWLock *lock, LWLockMode mode)
 
 	MyProc->lwWaiting = true;
 	MyProc->lwWaitMode = mode;
+    clock_gettime(CLOCK_REALTIME, &(MyProc->trxStartTime));
 
 	/* LW_WAIT_UNTIL_FREE waiters are always at the front of the queue */
 	if (mode == LW_WAIT_UNTIL_FREE)

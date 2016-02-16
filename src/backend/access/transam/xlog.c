@@ -2567,6 +2567,7 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 void
 XLogFlush(XLogRecPtr record)
 {
+	TRACE_FUNCTION_START();
 	XLogRecPtr	WriteRqstPtr;
 	XLogwrtRqst WriteRqst;
 
@@ -2580,11 +2581,13 @@ XLogFlush(XLogRecPtr record)
 	if (!XLogInsertAllowed())
 	{
 		UpdateMinRecoveryPoint(record, false);
+        TRACE_FUNCTION_END();
 		return;
 	}
 
 	/* Quick exit if already known flushed */
 	if (record <= LogwrtResult.Flush)
+        TRACE_FUNCTION_END();
 		return;
 
 #ifdef WAL_DEBUG
@@ -2640,7 +2643,7 @@ XLogFlush(XLogRecPtr record)
 		 * helps to maintain a good rate of group committing when the system
 		 * is bottlenecked by the speed of fsyncing.
 		 */
-		if (!LWLockAcquireOrWait(WALWriteLock, LW_EXCLUSIVE))
+		if (!TRACE_S_E(LWLockAcquireOrWait(WALWriteLock, LW_EXCLUSIVE), 1))
 		{
 			/*
 			 * The lock is now free, but we didn't acquire it yet. Before we
@@ -2727,6 +2730,7 @@ XLogFlush(XLogRecPtr record)
 		"xlog flush request %X/%X is not satisfied --- flushed only to %X/%X",
 			 (uint32) (record >> 32), (uint32) record,
 		   (uint32) (LogwrtResult.Flush >> 32), (uint32) LogwrtResult.Flush);
+    TRACE_FUNCTION_END();
 }
 
 /*

@@ -19,6 +19,9 @@
 #include "storage/latch.h"
 #include "storage/lock.h"
 #include "storage/pg_sema.h"
+#include <time.h>
+
+typedef struct timespec timespec;
 
 /*
  * Each backend advertises up to PGPROC_MAX_CACHED_SUBXIDS TransactionIds
@@ -155,6 +158,7 @@ struct PGPROC
 	bool		fpVXIDLock;		/* are we holding a fast-path VXID lock? */
 	LocalTransactionId fpLocalTransactionId;	/* lxid for fast-path VXID
 												 * lock */
+    timespec trxStartTime;
 };
 
 /* NOTE: "typedef struct PGPROC PGPROC" appears in storage/lock.h. */
