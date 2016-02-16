@@ -152,19 +152,19 @@ void QUERY_START() {
 }
 
 void TRX_START() {
-#ifdef MONITOR
+#ifdef LATENCY
     TraceTool::get_instance()->start_trx();
 #endif
 }
 
 void TRX_END() {
-#ifdef MONITOR
+#ifdef LATENCY
     TraceTool::get_instance()->end_trx();
 #endif
 }
 
 void COMMIT(int successful) {
-#ifdef MONITOR
+#ifdef LATENCY
     TraceTool::get_instance()->is_commit = true;
     TraceTool::get_instance()->commit_successful = successful;
 #endif
@@ -185,13 +185,13 @@ void PATH_DEC() {
 }
 
 void PATH_SET(int path_count) {
-#ifdef MONITOR
+#ifdef LATENCY
     TraceTool::get_instance()->path_count = path_count;
 #endif
 }
 
 int PATH_GET() {
-#ifdef MONITOR
+#ifdef LATENCY
     return TraceTool::get_instance()->path_count;
 #endif
 }
