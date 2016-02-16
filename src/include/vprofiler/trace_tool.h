@@ -4,6 +4,8 @@
 #include <pthread.h>
 #include <time.h>
 
+typedef struct timespec timespec;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
