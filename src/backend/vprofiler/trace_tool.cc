@@ -360,6 +360,7 @@ void TraceTool::end_trx() {
 }
 
 void TraceTool::end_transaction() {
+    log_file << "Starting end_trx" << endl;
 #ifdef LATENCY
     timespec now = get_time();
     long latency = difftime(trans_start, now);
@@ -369,6 +370,7 @@ void TraceTool::end_transaction() {
     }
     is_commit = false;
 #endif
+    log_file << "Ending end_trx" << endl;
 }
 
 void TraceTool::add_record(int function_index, long duration) {

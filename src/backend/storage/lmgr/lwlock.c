@@ -86,6 +86,7 @@
 #include "storage/spin.h"
 #include "utils/memutils.h"
 #include <unistd.h>
+#include <vprofiler/trace_tool.h>
 
 #ifdef LWLOCK_STATS
 #include "utils/hsearch.h"
@@ -806,6 +807,7 @@ proc_compare(const void *arg1, const void *arg2)
 static void
 LWLockWakeup(LWLock *lock)
 {
+    log_command("Starting wakup");
 	bool		new_release_ok;
 	bool		wokeup_somebody = false;
 	dlist_head	wakeup;
@@ -920,6 +922,7 @@ LWLockWakeup(LWLock *lock)
 		waiter->lwWaiting = false;
 		PGSemaphoreUnlock(&waiter->sem);
 	}
+    log_command("wakup ends");
 }
 
 /*
