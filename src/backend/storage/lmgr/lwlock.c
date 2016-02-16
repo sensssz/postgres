@@ -781,6 +781,25 @@ LWLockAttemptLock(LWLock *lock, LWLockMode mode)
 	pg_unreachable();
 }
 
+static int
+proc_compare(const void *arg1, const void *arg2)
+{
+    PGPROC *proc1 = (PGPROC *) arg1;
+    PGPROC *proc2 = (PGPROC *) arg2;
+    if (proc1->trxStartTime.tv_sec > proc2->trxStartTime.tv_sec)
+    {
+        return 1;
+    }
+    else if (proc1->trxStartTime.tv_sec < proc2->trxStartTime.tv_sec)
+    {
+        return -1;
+    }
+    else
+    {
+        return (int) (proc1->trxStartTime.tv_nsec - proc2->trxStartTime.tv_nsec);
+    }
+}
+
 /*
  * Wakeup all the lockers that currently have a chance to acquire the lock.
  */
@@ -791,6 +810,9 @@ LWLockWakeup(LWLock *lock)
 	bool		wokeup_somebody = false;
 	dlist_head	wakeup;
 	dlist_mutable_iter iter;
+    unsigned long      num_waiters = 0;
+    PGPROC      **waiters;
+    int         index = 0;
 #ifdef LWLOCK_STATS
 	lwlock_stats *lwstats;
 
@@ -808,9 +830,23 @@ LWLockWakeup(LWLock *lock)
 	SpinLockAcquire(&lock->mutex);
 #endif
 
-	dlist_foreach_modify(iter, &lock->waiters)
+    dlist_foreach_modify(iter, &lock->waiters)
+    {
+        ++num_waiters;
+    }
+    waiters = (PGPROC **) malloc(num_waiters * sizeof(PGPROC *));
+
+    dlist_foreach_modify(iter, &lock->waiters)
+    {
+        waiters[index] = dlist_container(PGPROC, lwWaitLink, iter.cur);
+        index++;
+    }
+
+    qsort(waiters, num_waiters, sizeof(PGPROC *), proc_compare);
+
+	for (index = 0; index < num_waiters; ++index)
 	{
-		PGPROC	   *waiter = dlist_container(PGPROC, lwWaitLink, iter.cur);
+		PGPROC	   *waiter = waiters[index];
 
 		if (wokeup_somebody && waiter->lwWaitMode == LW_EXCLUSIVE)
 			continue;
@@ -840,6 +876,9 @@ LWLockWakeup(LWLock *lock)
 		if (waiter->lwWaitMode == LW_EXCLUSIVE)
 			break;
 	}
+
+    free(waiters);
+    waiters = NULL;
 
 	Assert(dlist_is_empty(&wakeup) || pg_atomic_read_u32(&lock->state) & LW_FLAG_HAS_WAITERS);
 
