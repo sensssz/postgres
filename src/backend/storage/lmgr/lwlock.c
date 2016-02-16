@@ -831,24 +831,26 @@ LWLockWakeup(LWLock *lock)
 	SpinLockAcquire(&lock->mutex);
 #endif
 
-    dlist_foreach(im_iter, &lock->waiters)
+//    dlist_foreach(im_iter, &lock->waiters)
+//    {
+//        ++num_waiters;
+//    }
+//    waiters = (PGPROC **) malloc(num_waiters * sizeof(PGPROC *));
+//
+//    dlist_foreach(im_iter, &lock->waiters)
+//    {
+//        waiters[index] = dlist_container(PGPROC, lwWaitLink, iter.cur);
+//        index++;
+//    }
+//
+//    qsort(waiters, num_waiters, sizeof(PGPROC *), proc_compare);
+//
+//	for (index = 0; index < num_waiters; ++index)
+//	{
+//		PGPROC	   *waiter = waiters[index];
+    dlist_foreach_modify(iter, &lock->waiters)
     {
-        ++num_waiters;
-    }
-    waiters = (PGPROC **) malloc(num_waiters * sizeof(PGPROC *));
-
-    dlist_foreach(im_iter, &lock->waiters)
-    {
-        waiters[index] = dlist_container(PGPROC, lwWaitLink, iter.cur);
-        index++;
-    }
-
-    qsort(waiters, num_waiters, sizeof(PGPROC *), proc_compare);
-
-	for (index = 0; index < num_waiters; ++index)
-	{
-		PGPROC	   *waiter = waiters[index];
-//        PGPROC	   *waiter = dlist_container(PGPROC, lwWaitLink, iter.cur);
+        PGPROC	   *waiter = dlist_container(PGPROC, lwWaitLink, iter.cur);
 
         if (wokeup_somebody && waiter->lwWaitMode == LW_EXCLUSIVE)
 			continue;
