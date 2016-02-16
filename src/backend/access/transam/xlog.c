@@ -2567,7 +2567,6 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 void
 XLogFlush(XLogRecPtr record)
 {
-	TRACE_FUNCTION_START();
 	XLogRecPtr	WriteRqstPtr;
 	XLogwrtRqst WriteRqst;
 
@@ -2581,13 +2580,11 @@ XLogFlush(XLogRecPtr record)
 	if (!XLogInsertAllowed())
 	{
 		UpdateMinRecoveryPoint(record, false);
-        TRACE_FUNCTION_END();
 		return;
 	}
 
 	/* Quick exit if already known flushed */
 	if (record <= LogwrtResult.Flush)
-        TRACE_FUNCTION_END();
 		return;
 
 #ifdef WAL_DEBUG
@@ -2730,7 +2727,6 @@ XLogFlush(XLogRecPtr record)
 		"xlog flush request %X/%X is not satisfied --- flushed only to %X/%X",
 			 (uint32) (record >> 32), (uint32) record,
 		   (uint32) (LogwrtResult.Flush >> 32), (uint32) LogwrtResult.Flush);
-    TRACE_FUNCTION_END();
 }
 
 /*
