@@ -20,6 +20,7 @@ using std::set;
 #define TARGET_PATH_COUNT 2
 #define NUMBER_OF_FUNCTIONS 0
 #define LATENCY
+#define MONITOR
 
 ulint transaction_id = 0;
 
