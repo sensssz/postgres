@@ -2,6 +2,7 @@
 #define MY_TRACE_TOOL_H
 
 #include <pthread.h>
+#include <time.h>
 
 #ifdef __cplusplus
 extern "C" {
