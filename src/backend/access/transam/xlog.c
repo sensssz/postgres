@@ -2643,7 +2643,7 @@ XLogFlush(XLogRecPtr record)
 		 * helps to maintain a good rate of group committing when the system
 		 * is bottlenecked by the speed of fsyncing.
 		 */
-		if (!TRACE_S_E(LWLockAcquireOrWait(WALWriteLock, LW_EXCLUSIVE), 1))
+		if (!LWLockAcquireOrWait(WALWriteLock, LW_EXCLUSIVE))
 		{
 			/*
 			 * The lock is now free, but we didn't acquire it yet. Before we
