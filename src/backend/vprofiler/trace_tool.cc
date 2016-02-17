@@ -26,8 +26,6 @@ ulint transaction_id = 0;
 class TraceTool {
 private:
     static TraceTool *instance;
-
-    static __thread timespec trans_start;
     /*!< Start time of the current transaction. */
     vector<vector<int> > function_times;
     /*!< Stores the running time of the child functions
@@ -40,6 +38,7 @@ private:
     TraceTool(TraceTool const &) { };
 public:
     static timespec global_last_query;
+    static __thread timespec trans_start;
     static __thread ulint current_transaction_id;
     /*!< Each thread can execute only one transaction at
                                                           a time. This is the ID of the current transactions. */
@@ -235,6 +234,10 @@ int TRACE_END(int index) {
     }
 #endif
     return 0;
+}
+
+timespec get_trx_start() {
+    return TraceTool::get_instance()->trans_start;
 }
 
 /********************************************************************//**
