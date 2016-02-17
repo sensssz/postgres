@@ -74,6 +74,7 @@
  *	  quick, before we're queued, since after Phase 2 we're already queued.
  * -------------------------------------------------------------------------
  */
+#include <vprofiler/trace_tool.h>
 #include "postgres.h"
 
 #include "miscadmin.h"
@@ -103,6 +104,8 @@ extern slock_t *ShmemLock;
 #define LW_LOCK_MASK				((uint32) ((1 << 25)-1))
 /* Must be greater than MAX_BACKENDS - which is 2^23-1, so we're fine. */
 #define LW_SHARED_MASK				((uint32) ((1 << 24)-1))
+
+static int proc_compare(const void *arg1, const void *arg2);
 
 /*
  * This is indexed by tranche ID and stores metadata for all tranches known
@@ -780,6 +783,24 @@ LWLockAttemptLock(LWLock *lock, LWLockMode mode)
 	pg_unreachable();
 }
 
+static int proc_compare(const void *arg1, const void *arg2)
+{
+    const PGPROC *proc1 = (const PGPROC *) arg1;
+    const PGPROC *proc2 = (const PGPROC *) arg2;
+    if (proc1->trxStartTime.tv_sec > proc1->trxStartTime.tv_sec)
+    {
+        return -1;
+    }
+    else if (proc1->trxStartTime.tv_sec < proc1->trxStartTime.tv_sec)
+    {
+        return 1;
+    }
+    else
+    {
+        return (int) (proc2->trxStartTime.tv_nsec - proc1->trxStartTime.tv_nsec);
+    }
+}
+
 /*
  * Wakeup all the lockers that currently have a chance to acquire the lock.
  */
@@ -790,6 +811,12 @@ LWLockWakeup(LWLock *lock)
 	bool		wokeup_somebody = false;
 	dlist_head	wakeup;
 	dlist_mutable_iter iter;
+
+    PGPROC      **waiters = NULL;
+    dlist_iter  im_iter;
+    size_t      size = 0;
+    int         index = 0;
+    int         etf = 0;
 #ifdef LWLOCK_STATS
 	lwlock_stats *lwstats;
 
@@ -807,38 +834,62 @@ LWLockWakeup(LWLock *lock)
 	SpinLockAcquire(&lock->mutex);
 #endif
 
-	dlist_foreach_modify(iter, &lock->waiters)
-	{
-		PGPROC	   *waiter = dlist_container(PGPROC, lwWaitLink, iter.cur);
+    dlist_foreach(im_iter, &lock->waiters)
+    {
+        size++;
+    }
+    waiters = (PGPROC **) malloc(size * sizeof(PGPROC *));
+    dlist_foreach(im_iter, &lock->waiters)
+    {
+        waiters[index++] = dlist_container(PGPROC, lwWaitLink, im_iter.cur);
+    }
+    free(waiters);
 
-		if (wokeup_somebody && waiter->lwWaitMode == LW_EXCLUSIVE)
-			continue;
+    if (etf)
+    {
+        dlist_foreach(im_iter, &lock->waiters)
+        {
+            size++;
+        }
+        waiters = (PGPROC **) malloc(size * sizeof(PGPROC *));
+        dlist_foreach(im_iter, &lock->waiters)
+        {
+            waiters[index++] = dlist_container(PGPROC, lwWaitLink, im_iter.cur);
+        }
+        free(waiters);
+    }
+    else {
+        dlist_foreach_modify(iter, &lock->waiters) {
+            PGPROC *waiter = dlist_container(PGPROC, lwWaitLink, iter.cur);
 
-		dlist_delete(&waiter->lwWaitLink);
-		dlist_push_tail(&wakeup, &waiter->lwWaitLink);
+            if (wokeup_somebody && waiter->lwWaitMode == LW_EXCLUSIVE)
+                continue;
 
-		if (waiter->lwWaitMode != LW_WAIT_UNTIL_FREE)
-		{
-			/*
-			 * Prevent additional wakeups until retryer gets to run. Backends
-			 * that are just waiting for the lock to become free don't retry
-			 * automatically.
-			 */
-			new_release_ok = false;
+            dlist_delete(&waiter->lwWaitLink);
+            dlist_push_tail(&wakeup, &waiter->lwWaitLink);
 
-			/*
-			 * Don't wakeup (further) exclusive locks.
-			 */
-			wokeup_somebody = true;
-		}
+            if (waiter->lwWaitMode != LW_WAIT_UNTIL_FREE) {
+                /*
+                 * Prevent additional wakeups until retryer gets to run. Backends
+                 * that are just waiting for the lock to become free don't retry
+                 * automatically.
+                 */
+                new_release_ok = false;
 
-		/*
-		 * Once we've woken up an exclusive lock, there's no point in waking
-		 * up anybody else.
-		 */
-		if (waiter->lwWaitMode == LW_EXCLUSIVE)
-			break;
-	}
+                /*
+                 * Don't wakeup (further) exclusive locks.
+                 */
+                wokeup_somebody = true;
+            }
+
+            /*
+             * Once we've woken up an exclusive lock, there's no point in waking
+             * up anybody else.
+             */
+            if (waiter->lwWaitMode == LW_EXCLUSIVE)
+                break;
+        }
+    }
 
 	Assert(dlist_is_empty(&wakeup) || pg_atomic_read_u32(&lock->state) & LW_FLAG_HAS_WAITERS);
 
@@ -916,6 +967,7 @@ LWLockQueueSelf(LWLock *lock, LWLockMode mode)
 
 	MyProc->lwWaiting = true;
 	MyProc->lwWaitMode = mode;
+    MyProc->trxStartTime = get_trx_start();
 
 	/* LW_WAIT_UNTIL_FREE waiters are always at the front of the queue */
 	if (mode == LW_WAIT_UNTIL_FREE)
