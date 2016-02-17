@@ -842,7 +842,7 @@ LWLockWakeup(LWLock *lock)
     waiters = (PGPROC **) malloc(size * sizeof(PGPROC *));
     dlist_foreach(im_iter_get, &lock->waiters)
     {
-        waiters[index++] = dlist_container(PGPROC, lwWaitLink, im_iter_get.cur);
+//        waiters[index++] = dlist_container(PGPROC, lwWaitLink, im_iter_get.cur);
     }
 //    qsort(waiters, size, sizeof(PGPROC *), proc_compare);
     free(waiters);
