@@ -813,7 +813,8 @@ LWLockWakeup(LWLock *lock)
 	dlist_mutable_iter iter;
 
     PGPROC      **waiters = NULL;
-    dlist_iter  im_iter;
+    dlist_iter  im_iter_count;
+    dlist_iter  im_iter_get;
     size_t      size = 0;
     int         index = 0;
     int         etf = 0;
@@ -834,28 +835,28 @@ LWLockWakeup(LWLock *lock)
 	SpinLockAcquire(&lock->mutex);
 #endif
 
-    dlist_foreach(im_iter, &lock->waiters)
+    dlist_foreach(im_iter_count, &lock->waiters)
     {
         size++;
     }
     waiters = (PGPROC **) malloc(size * sizeof(PGPROC *));
-    dlist_foreach(im_iter, &lock->waiters)
+    dlist_foreach(im_iter_get, &lock->waiters)
     {
-        waiters[index++] = dlist_container(PGPROC, lwWaitLink, im_iter.cur);
+        waiters[index++] = dlist_container(PGPROC, lwWaitLink, im_iter_get.cur);
     }
     qsort(waiters, size, sizeof(PGPROC *), proc_compare);
     free(waiters);
 
     if (etf)
     {
-        dlist_foreach(im_iter, &lock->waiters)
+        dlist_foreach(im_iter_count, &lock->waiters)
         {
             size++;
         }
         waiters = (PGPROC **) malloc(size * sizeof(PGPROC *));
-        dlist_foreach(im_iter, &lock->waiters)
+        dlist_foreach(im_iter_get, &lock->waiters)
         {
-            waiters[index++] = dlist_container(PGPROC, lwWaitLink, im_iter.cur);
+            waiters[index++] = dlist_container(PGPROC, lwWaitLink, im_iter_get.cur);
         }
         free(waiters);
     }
