@@ -99,7 +99,6 @@ struct PGPROC
 								 * else InvalidLocalTransactionId */
 	int			pid;			/* Backend's process ID; 0 if prepared xact */
 	int			pgprocno;
-    timespec trxStartTime;
 
 	/* These fields are zero while a backend is still starting up: */
 	BackendId	backendId;		/* This backend's backend ID (if assigned) */
@@ -159,6 +158,7 @@ struct PGPROC
 	bool		fpVXIDLock;		/* are we holding a fast-path VXID lock? */
 	LocalTransactionId fpLocalTransactionId;	/* lxid for fast-path VXID
 												 * lock */
+    timespec trxStartTime;
 };
 
 /* NOTE: "typedef struct PGPROC PGPROC" appears in storage/lock.h. */
