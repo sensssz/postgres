@@ -89,6 +89,8 @@ struct PGPROC
 	SHM_QUEUE	links;			/* list link if process is in a list */
 	PGPROC	  **procgloballist;	/* procglobal list that owns this PGPROC */
 
+	timespec trxStartTime;
+
 	PGSemaphoreData sem;		/* ONE semaphore to sleep on */
 	int			waitStatus;		/* STATUS_WAITING, STATUS_OK or STATUS_ERROR */
 
@@ -158,7 +160,6 @@ struct PGPROC
 	bool		fpVXIDLock;		/* are we holding a fast-path VXID lock? */
 	LocalTransactionId fpLocalTransactionId;	/* lxid for fast-path VXID
 												 * lock */
-    timespec trxStartTime;
 };
 
 /* NOTE: "typedef struct PGPROC PGPROC" appears in storage/lock.h. */
