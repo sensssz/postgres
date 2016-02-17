@@ -18,7 +18,7 @@ using std::to_string;
 using std::set;
 
 #define TARGET_PATH_COUNT 2
-#define NUMBER_OF_FUNCTIONS 0
+#define NUMBER_OF_FUNCTIONS 50
 #define LATENCY
 #define MONITOR
 
@@ -27,6 +27,8 @@ ulint transaction_id = 0;
 class TraceTool {
 private:
     static TraceTool *instance;
+
+    static __thread timespec trans_start;
     /*!< Start time of the current transaction. */
     vector<vector<int> > function_times;
     /*!< Stores the running time of the child functions
@@ -39,7 +41,6 @@ private:
     TraceTool(TraceTool const &) { };
 public:
     static timespec global_last_query;
-    static __thread timespec trans_start;
     static __thread ulint current_transaction_id;
     /*!< Each thread can execute only one transaction at
                                                           a time. This is the ID of the current transactions. */
@@ -153,19 +154,19 @@ void QUERY_START() {
 }
 
 void TRX_START() {
-#ifdef LATENCY
+#ifdef MONITOR
     TraceTool::get_instance()->start_trx();
 #endif
 }
 
 void TRX_END() {
-#ifdef LATENCY
+#ifdef MONITOR
     TraceTool::get_instance()->end_trx();
 #endif
 }
 
 void COMMIT(int successful) {
-#ifdef LATENCY
+#ifdef MONITOR
     TraceTool::get_instance()->is_commit = true;
     TraceTool::get_instance()->commit_successful = successful;
 #endif
@@ -186,13 +187,13 @@ void PATH_DEC() {
 }
 
 void PATH_SET(int path_count) {
-#ifdef LATENCY
+#ifdef MONITOR
     TraceTool::get_instance()->path_count = path_count;
 #endif
 }
 
 int PATH_GET() {
-#ifdef LATENCY
+#ifdef MONITOR
     return TraceTool::get_instance()->path_count;
 #endif
 }
@@ -235,10 +236,6 @@ int TRACE_END(int index) {
     }
 #endif
     return 0;
-}
-
-timespec get_trx_start() {
-    return TraceTool::get_instance()->trans_start;
 }
 
 /********************************************************************//**
@@ -360,7 +357,6 @@ void TraceTool::end_trx() {
 }
 
 void TraceTool::end_transaction() {
-    log_file << "Starting end_trx" << endl;
 #ifdef LATENCY
     timespec now = get_time();
     long latency = difftime(trans_start, now);
@@ -370,7 +366,6 @@ void TraceTool::end_transaction() {
     }
     is_commit = false;
 #endif
-    log_file << "Ending end_trx" << endl;
 }
 
 void TraceTool::add_record(int function_index, long duration) {
