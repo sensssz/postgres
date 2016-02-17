@@ -969,7 +969,7 @@ LWLockQueueSelf(LWLock *lock, LWLockMode mode)
 
 	MyProc->lwWaiting = true;
 	MyProc->lwWaitMode = mode;
-    MyProc->trxStartTime = get_trx_start();
+//    MyProc->trxStartTime = get_trx_start();
 
 	/* LW_WAIT_UNTIL_FREE waiters are always at the front of the queue */
 	if (mode == LW_WAIT_UNTIL_FREE)
