@@ -843,6 +843,7 @@ LWLockWakeup(LWLock *lock)
     {
         waiters[index++] = dlist_container(PGPROC, lwWaitLink, im_iter.cur);
     }
+    qsort(waiters, size, sizeof(PGPROC *), proc_compare);
     free(waiters);
 
     if (etf)
