@@ -85,8 +85,6 @@
 #include "storage/proc.h"
 #include "storage/spin.h"
 #include "utils/memutils.h"
-#include <unistd.h>
-#include <vprofiler/trace_tool.h>
 
 #ifdef LWLOCK_STATS
 #include "utils/hsearch.h"
@@ -477,10 +475,10 @@ CreateLWLocks(void)
 			char	   *trancheNames;
 
 			NamedLWLockTrancheArray = (NamedLWLockTranche *)
-				&MainLWLockArray[numLocks + numNamedLocks];
+					&MainLWLockArray[numLocks + numNamedLocks];
 
 			trancheNames = (char *) NamedLWLockTrancheArray +
-				(NamedLWLockTrancheRequests * sizeof(NamedLWLockTranche));
+						   (NamedLWLockTrancheRequests * sizeof(NamedLWLockTranche));
 			lock = &MainLWLockArray[numLocks];
 
 			for (i = 0; i < NamedLWLockTrancheRequests; i++)
@@ -510,8 +508,8 @@ CreateLWLocks(void)
 	{
 		LWLockTranchesAllocated = 16;
 		LWLockTrancheArray = (LWLockTranche **)
-			MemoryContextAlloc(TopMemoryContext,
-						  LWLockTranchesAllocated * sizeof(LWLockTranche *));
+				MemoryContextAlloc(TopMemoryContext,
+								   LWLockTranchesAllocated * sizeof(LWLockTranche *));
 		Assert(LWLockTranchesAllocated >= LWTRANCHE_FIRST_USER_DEFINED);
 	}
 
@@ -638,8 +636,8 @@ LWLockRegisterTranche(int tranche_id, LWLockTranche *tranche)
 			i *= 2;
 
 		LWLockTrancheArray = (LWLockTranche **)
-			repalloc(LWLockTrancheArray,
-					 i * sizeof(LWLockTranche *));
+				repalloc(LWLockTrancheArray,
+						 i * sizeof(LWLockTranche *));
 		LWLockTranchesAllocated = i;
 	}
 
@@ -670,9 +668,9 @@ RequestNamedLWLockTranche(const char *tranche_name, int num_lwlocks)
 	{
 		NamedLWLockTrancheRequestsAllocated = 16;
 		NamedLWLockTrancheRequestArray = (NamedLWLockTrancheRequest *)
-			MemoryContextAlloc(TopMemoryContext,
-							   NamedLWLockTrancheRequestsAllocated
-							   * sizeof(NamedLWLockTrancheRequest));
+				MemoryContextAlloc(TopMemoryContext,
+								   NamedLWLockTrancheRequestsAllocated
+								   * sizeof(NamedLWLockTrancheRequest));
 	}
 
 	if (NamedLWLockTrancheRequests >= NamedLWLockTrancheRequestsAllocated)
@@ -683,8 +681,8 @@ RequestNamedLWLockTranche(const char *tranche_name, int num_lwlocks)
 			i *= 2;
 
 		NamedLWLockTrancheRequestArray = (NamedLWLockTrancheRequest *)
-			repalloc(NamedLWLockTrancheRequestArray,
-					 i * sizeof(NamedLWLockTrancheRequest));
+				repalloc(NamedLWLockTrancheRequestArray,
+						 i * sizeof(NamedLWLockTrancheRequest));
 		NamedLWLockTrancheRequestsAllocated = i;
 	}
 
@@ -782,40 +780,16 @@ LWLockAttemptLock(LWLock *lock, LWLockMode mode)
 	pg_unreachable();
 }
 
-static int
-proc_compare(const void *arg1, const void *arg2)
-{
-    PGPROC *proc1 = (PGPROC *) arg1;
-    PGPROC *proc2 = (PGPROC *) arg2;
-    if (proc1->trxStartTime.tv_sec > proc2->trxStartTime.tv_sec)
-    {
-        return 1;
-    }
-    else if (proc1->trxStartTime.tv_sec < proc2->trxStartTime.tv_sec)
-    {
-        return -1;
-    }
-    else
-    {
-        return (int) (proc1->trxStartTime.tv_nsec - proc2->trxStartTime.tv_nsec);
-    }
-}
-
 /*
  * Wakeup all the lockers that currently have a chance to acquire the lock.
  */
 static void
 LWLockWakeup(LWLock *lock)
 {
-    log_command("Starting wakup");
 	bool		new_release_ok;
 	bool		wokeup_somebody = false;
 	dlist_head	wakeup;
 	dlist_mutable_iter iter;
-    dlist_iter  im_iter;
-    unsigned long      num_waiters = 0;
-    PGPROC      **waiters = NULL;
-    int         index = 0;
 #ifdef LWLOCK_STATS
 	lwlock_stats *lwstats;
 
@@ -833,28 +807,11 @@ LWLockWakeup(LWLock *lock)
 	SpinLockAcquire(&lock->mutex);
 #endif
 
-//    dlist_foreach(im_iter, &lock->waiters)
-//    {
-//        ++num_waiters;
-//    }
-//    waiters = (PGPROC **) malloc(num_waiters * sizeof(PGPROC *));
-//
-//    dlist_foreach(im_iter, &lock->waiters)
-//    {
-//        waiters[index] = dlist_container(PGPROC, lwWaitLink, iter.cur);
-//        index++;
-//    }
-//
-//    qsort(waiters, num_waiters, sizeof(PGPROC *), proc_compare);
-//
-//	for (index = 0; index < num_waiters; ++index)
-//	{
-//		PGPROC	   *waiter = waiters[index];
-    dlist_foreach_modify(iter, &lock->waiters)
-    {
-        PGPROC	   *waiter = dlist_container(PGPROC, lwWaitLink, iter.cur);
+	dlist_foreach_modify(iter, &lock->waiters)
+	{
+		PGPROC	   *waiter = dlist_container(PGPROC, lwWaitLink, iter.cur);
 
-        if (wokeup_somebody && waiter->lwWaitMode == LW_EXCLUSIVE)
+		if (wokeup_somebody && waiter->lwWaitMode == LW_EXCLUSIVE)
 			continue;
 
 		dlist_delete(&waiter->lwWaitLink);
@@ -882,7 +839,6 @@ LWLockWakeup(LWLock *lock)
 		if (waiter->lwWaitMode == LW_EXCLUSIVE)
 			break;
 	}
-    free(waiters);
 
 	Assert(dlist_is_empty(&wakeup) || pg_atomic_read_u32(&lock->state) & LW_FLAG_HAS_WAITERS);
 
@@ -922,7 +878,6 @@ LWLockWakeup(LWLock *lock)
 		waiter->lwWaiting = false;
 		PGSemaphoreUnlock(&waiter->sem);
 	}
-    log_command("wakup ends");
 }
 
 /*
@@ -951,7 +906,7 @@ LWLockQueueSelf(LWLock *lock, LWLockMode mode)
 		elog(PANIC, "queueing for lock while waiting on another one");
 
 #ifdef LWLOCK_STATS
-	lwstats->spin_delay_count += SpinLockAcquire(&lock->mutex);
+		lwstats->spin_delay_count += SpinLockAcquire(&lock->mutex);
 #else
 	SpinLockAcquire(&lock->mutex);
 #endif
@@ -961,7 +916,6 @@ LWLockQueueSelf(LWLock *lock, LWLockMode mode)
 
 	MyProc->lwWaiting = true;
 	MyProc->lwWaitMode = mode;
-    clock_gettime(CLOCK_REALTIME, &(MyProc->trxStartTime));
 
 	/* LW_WAIT_UNTIL_FREE waiters are always at the front of the queue */
 	if (mode == LW_WAIT_UNTIL_FREE)
