@@ -817,7 +817,7 @@ LWLockWakeup(LWLock *lock)
     dlist_iter  im_iter_get;
     size_t      size = 0;
     int         index = 0;
-    int         etf = 0;
+    int         etf = 1;
 #ifdef LWLOCK_STATS
 	lwlock_stats *lwstats;
 
@@ -835,18 +835,6 @@ LWLockWakeup(LWLock *lock)
 	SpinLockAcquire(&lock->mutex);
 #endif
 
-    dlist_foreach(im_iter_count, &lock->waiters)
-    {
-        size++;
-    }
-    waiters = (PGPROC **) malloc(size * sizeof(PGPROC *));
-    dlist_foreach(im_iter_get, &lock->waiters)
-    {
-        waiters[index++] = dlist_container(PGPROC, lwWaitLink, im_iter_get.cur);
-    }
-    qsort(waiters, size, sizeof(PGPROC *), proc_compare);
-    free(waiters);
-
     if (etf)
     {
         dlist_foreach(im_iter_count, &lock->waiters)
@@ -857,6 +845,38 @@ LWLockWakeup(LWLock *lock)
         dlist_foreach(im_iter_get, &lock->waiters)
         {
             waiters[index++] = dlist_container(PGPROC, lwWaitLink, im_iter_get.cur);
+        }
+        qsort(waiters, size, sizeof(PGPROC *), proc_compare);
+        for (index = 0; index < size; ++index)
+        {
+            PGPROC *waiter = waiters[index];
+
+            if (wokeup_somebody && waiter->lwWaitMode == LW_EXCLUSIVE)
+                continue;
+
+            dlist_delete(&waiter->lwWaitLink);
+            dlist_push_tail(&wakeup, &waiter->lwWaitLink);
+
+            if (waiter->lwWaitMode != LW_WAIT_UNTIL_FREE) {
+                /*
+                 * Prevent additional wakeups until retryer gets to run. Backends
+                 * that are just waiting for the lock to become free don't retry
+                 * automatically.
+                 */
+                new_release_ok = false;
+
+                /*
+                 * Don't wakeup (further) exclusive locks.
+                 */
+                wokeup_somebody = true;
+            }
+
+            /*
+             * Once we've woken up an exclusive lock, there's no point in waking
+             * up anybody else.
+             */
+            if (waiter->lwWaitMode == LW_EXCLUSIVE)
+                break;
         }
         free(waiters);
     }
