@@ -835,17 +835,17 @@ LWLockWakeup(LWLock *lock)
 	SpinLockAcquire(&lock->mutex);
 #endif
 
-//    dlist_foreach(im_iter_count, &lock->waiters)
-//    {
-//        size++;
-//    }
-//    waiters = (PGPROC **) malloc(size * sizeof(PGPROC *));
-//    dlist_foreach(im_iter_get, &lock->waiters)
-//    {
-//        waiters[index++] = dlist_container(PGPROC, lwWaitLink, im_iter_get.cur);
-//    }
-//    qsort(waiters, size, sizeof(PGPROC *), proc_compare);
-//    free(waiters);
+    dlist_foreach(im_iter_count, &lock->waiters)
+    {
+        size++;
+    }
+    waiters = (PGPROC **) malloc(size * sizeof(PGPROC *));
+    dlist_foreach(im_iter_get, &lock->waiters)
+    {
+        waiters[index++] = dlist_container(PGPROC, lwWaitLink, im_iter_get.cur);
+    }
+    qsort(waiters, size, sizeof(PGPROC *), proc_compare);
+    free(waiters);
 
     if (etf)
     {
