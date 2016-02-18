@@ -817,7 +817,7 @@ LWLockWakeup(LWLock *lock)
     dlist_iter  im_iter_get;
     size_t      size = 0;
     int         index = 0;
-    int         etf = 0Use Use;
+    int         etf = 0;
 #ifdef LWLOCK_STATS
 	lwlock_stats *lwstats;
 
