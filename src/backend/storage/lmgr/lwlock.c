@@ -106,6 +106,7 @@ extern slock_t *ShmemLock;
 #define LW_SHARED_MASK				((uint32) ((1 << 24)-1))
 
 static int proc_compare(const void *arg1, const void *arg2);
+static void collect_lock_data(LWLock *lock);
 
 /*
  * This is indexed by tranche ID and stores metadata for all tranches known
@@ -813,11 +814,10 @@ LWLockWakeup(LWLock *lock)
 	dlist_mutable_iter iter;
 
     PGPROC      **waiters = NULL;
-    dlist_iter  im_iter_count;
-    dlist_iter  im_iter_get;
+    dlist_iter  im_iter;
     size_t      size = 0;
     int         index = 0;
-    int         etf = 0;
+    int         etf = (lock == WALWriteLock);
 #ifdef LWLOCK_STATS
 	lwlock_stats *lwstats;
 
@@ -837,14 +837,14 @@ LWLockWakeup(LWLock *lock)
 
     if (etf)
     {
-        dlist_foreach(im_iter_count, &lock->waiters)
+        dlist_foreach(im_iter, &lock->waiters)
         {
             size++;
         }
         waiters = (PGPROC **) malloc(size * sizeof(PGPROC *));
-        dlist_foreach(im_iter_get, &lock->waiters)
+        dlist_foreach(im_iter, &lock->waiters)
         {
-            waiters[index++] = dlist_container(PGPROC, lwWaitLink, im_iter_get.cur);
+            waiters[index++] = dlist_container(PGPROC, lwWaitLink, im_iter.cur);
         }
         qsort(waiters, size, sizeof(PGPROC *), proc_compare);
         for (index = 0; index < size; ++index)
@@ -1103,6 +1103,28 @@ LWLockDequeueSelf(LWLock *lock)
 		Assert(nwaiters < MAX_BACKENDS);
 	}
 #endif
+}
+
+static void
+collect_lock_data(LWLock *lock)
+{
+    dlist_iter iter;
+    int num_reads = 0;
+    int num_writes = 0;
+    int num_waiters = 0;
+    dlist_foreach(iter, &lock->waiters)
+    {
+        PGPROC *waiter = dlist_container(PGPROC, lwWaitLink, iter.cur);
+        if (waiter->lwWaitMode == LW_EXCLUSIVE)
+        {
+            ++num_writes;
+        }
+        else
+        {
+            ++num_reads;
+        }
+    }
+    num_waiters = num_writes + num_reads;
 }
 
 /*
