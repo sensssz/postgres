@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <vprofiler/trace_tool.h>
 
 #include "access/clog.h"
 #include "access/commit_ts.h"
@@ -2751,6 +2752,8 @@ XLogBackgroundFlush(void)
 	XLogRecPtr	WriteRqstPtr;
 	bool		flexible = true;
 	bool		wrote_something = false;
+
+	log_command("Background flushing");
 
 	/* XLOG doesn't need flushing during recovery */
 	if (RecoveryInProgress())

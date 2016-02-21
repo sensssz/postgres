@@ -106,7 +106,6 @@ extern slock_t *ShmemLock;
 #define LW_SHARED_MASK				((uint32) ((1 << 24)-1))
 
 static int proc_compare(const void *arg1, const void *arg2);
-static void collect_lock_data(LWLock *lock);
 
 /*
  * This is indexed by tranche ID and stores metadata for all tranches known
@@ -788,11 +787,11 @@ static int proc_compare(const void *arg1, const void *arg2)
 {
     const PGPROC *proc1 = (const PGPROC *) arg1;
     const PGPROC *proc2 = (const PGPROC *) arg2;
-    if (proc1->trxStartTime.tv_sec > proc1->trxStartTime.tv_sec)
+    if (proc1->trxStartTime.tv_sec < proc1->trxStartTime.tv_sec)
     {
         return -1;
     }
-    else if (proc1->trxStartTime.tv_sec < proc1->trxStartTime.tv_sec)
+    else if (proc1->trxStartTime.tv_sec > proc1->trxStartTime.tv_sec)
     {
         return 1;
     }
@@ -817,7 +816,10 @@ LWLockWakeup(LWLock *lock)
     dlist_iter  im_iter;
     size_t      size = 0;
     int         index = 0;
-    int         etf = (lock == WALWriteLock);
+    int         etf = (lock == WALWriteLock && 0);
+    int         is_target = (lock == WALWriteLock);
+    int         num_waiters  = 0;
+    int         num_released = 0;
 #ifdef LWLOCK_STATS
 	lwlock_stats *lwstats;
 
@@ -883,10 +885,16 @@ LWLockWakeup(LWLock *lock)
     else {
         dlist_foreach_modify(iter, &lock->waiters) {
             PGPROC *waiter = dlist_container(PGPROC, lwWaitLink, iter.cur);
+            if (is_target) {
+                ++num_waiters;
+            }
 
             if (wokeup_somebody && waiter->lwWaitMode == LW_EXCLUSIVE)
                 continue;
 
+            if (is_target) {
+                ++num_released;
+            }
             dlist_delete(&waiter->lwWaitLink);
             dlist_push_tail(&wakeup, &waiter->lwWaitLink);
 
@@ -911,6 +919,11 @@ LWLockWakeup(LWLock *lock)
             if (waiter->lwWaitMode == LW_EXCLUSIVE)
                 break;
         }
+    }
+
+    if (is_target) {
+        PUSH_BACK(0, num_waiters);
+        PUSH_BACK(1, num_released);
     }
 
 	Assert(dlist_is_empty(&wakeup) || pg_atomic_read_u32(&lock->state) & LW_FLAG_HAS_WAITERS);
@@ -961,6 +974,9 @@ LWLockWakeup(LWLock *lock)
 static void
 LWLockQueueSelf(LWLock *lock, LWLockMode mode)
 {
+    int is_target   = (lock == WALWriteLock);
+    int num_waiters = 0;
+    dlist_iter      iter;
 #ifdef LWLOCK_STATS
 	lwlock_stats *lwstats;
 
@@ -990,6 +1006,13 @@ LWLockQueueSelf(LWLock *lock, LWLockMode mode)
 	MyProc->lwWaiting = true;
 	MyProc->lwWaitMode = mode;
     MyProc->trxStartTime = get_trx_start();
+
+    if (is_target) {
+        dlist_foreach(iter, &lock->waiters) {
+            ++num_waiters;
+        }
+        PUSH_BACK(2, num_waiters);
+    }
 
 	/* LW_WAIT_UNTIL_FREE waiters are always at the front of the queue */
 	if (mode == LW_WAIT_UNTIL_FREE)
@@ -1103,28 +1126,6 @@ LWLockDequeueSelf(LWLock *lock)
 		Assert(nwaiters < MAX_BACKENDS);
 	}
 #endif
-}
-
-static void
-collect_lock_data(LWLock *lock)
-{
-    dlist_iter iter;
-    int num_reads = 0;
-    int num_writes = 0;
-    int num_waiters = 0;
-    dlist_foreach(iter, &lock->waiters)
-    {
-        PGPROC *waiter = dlist_container(PGPROC, lwWaitLink, iter.cur);
-        if (waiter->lwWaitMode == LW_EXCLUSIVE)
-        {
-            ++num_writes;
-        }
-        else
-        {
-            ++num_reads;
-        }
-    }
-    num_waiters = num_writes + num_reads;
 }
 
 /*

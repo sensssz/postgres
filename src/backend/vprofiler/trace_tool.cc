@@ -37,6 +37,7 @@ private:
 
     TraceTool(TraceTool const &) { };
 public:
+    vector<vector<int>> statistics;
     static timespec global_last_query;
     static __thread timespec trans_start;
     static __thread ulint current_transaction_id;
@@ -92,6 +93,7 @@ public:
     /********************************************************************//**
     Dump data about function running time and latency to log file. */
     void write_latency(string dir);
+    void write_statistics(string dir);
     /********************************************************************//**
     Write necessary data to log files. */
     void write_log();
@@ -236,6 +238,10 @@ int TRACE_END(int index) {
     return 0;
 }
 
+void PUSH_BACK(int index, int data) {
+    TraceTool::get_instance()->statistics[index].push_back(data);
+}
+
 timespec get_trx_start() {
     return TraceTool::get_instance()->trans_start;
 }
@@ -266,6 +272,9 @@ TraceTool::TraceTool() : function_times() {
     for (int index = 0; index < number_of_functions; index++) {
         function_times.push_back(function_time);
         function_times[index].reserve(500000);
+
+        statistics.push_back(function_time);
+        statistics[index].reserve(500000);
     }
     transaction_start_times.reserve(500000);
     transaction_start_times.push_back(0);
@@ -406,9 +415,28 @@ void TraceTool::write_latency(string dir) {
     tpcc_log.close();
 }
 
+void TraceTool::write_statistics(string dir) {
+    ofstream statistics_log;
+    statistics_log.open(dir + "statistics_" + to_string(id));
+    int function_index = 0;
+    for (vector<vector<int> >::iterator iterator = statistics.begin();
+         iterator != statistics.end(); ++iterator) {
+        ulint number_of_transactions = iterator->size();
+        for (ulint index = 0; index < number_of_transactions; ++index) {
+            long latency = (*iterator)[index];
+            statistics_log << function_index << ',' << latency << endl;
+        }
+        function_index++;
+        vector<int>().swap(*iterator);
+    }
+    vector<vector<int> >().swap(statistics);
+    statistics_log.close();
+}
+
 void TraceTool::write_log() {
 //    log_file << "Write log on instance " << instance << ", id is " << id << endl;
     if (id > 0) {
         write_latency("latency/");
+        write_statistics("latency/");
     }
 }
