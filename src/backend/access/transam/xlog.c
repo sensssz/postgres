@@ -2753,8 +2753,6 @@ XLogBackgroundFlush(void)
 	bool		flexible = true;
 	bool		wrote_something = false;
 
-	log_command("Background flushing");
-
 	/* XLOG doesn't need flushing during recovery */
 	if (RecoveryInProgress())
 		return false;
@@ -2829,6 +2827,10 @@ XLogBackgroundFlush(void)
 	 * as many of the no-longer-needed WAL buffers for future use as we can.
 	 */
 	AdvanceXLInsertBuffer(InvalidXLogRecPtr, true);
+
+    if (wrote_something) {
+        log_command("Background flushing");
+    }
 
 	return wrote_something;
 }
