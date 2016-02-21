@@ -45,8 +45,6 @@ void PATH_INC();
 
 void PATH_DEC();
 
-void PUSH_BACK(int index, int data);
-
 timespec get_trx_start();
 
 /********************************************************************//**

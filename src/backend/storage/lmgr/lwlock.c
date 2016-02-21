@@ -817,9 +817,6 @@ LWLockWakeup(LWLock *lock)
     size_t      size = 0;
     int         index = 0;
     int         etf = (lock == WALWriteLock && 0);
-    int         is_target = (lock == WALWriteLock);
-    int         num_waiters  = 0;
-    int         num_released = 0;
 #ifdef LWLOCK_STATS
 	lwlock_stats *lwstats;
 
@@ -885,16 +882,10 @@ LWLockWakeup(LWLock *lock)
     else {
         dlist_foreach_modify(iter, &lock->waiters) {
             PGPROC *waiter = dlist_container(PGPROC, lwWaitLink, iter.cur);
-            if (is_target) {
-                ++num_waiters;
-            }
 
             if (wokeup_somebody && waiter->lwWaitMode == LW_EXCLUSIVE)
                 continue;
 
-            if (is_target) {
-                ++num_released;
-            }
             dlist_delete(&waiter->lwWaitLink);
             dlist_push_tail(&wakeup, &waiter->lwWaitLink);
 
@@ -919,11 +910,6 @@ LWLockWakeup(LWLock *lock)
             if (waiter->lwWaitMode == LW_EXCLUSIVE)
                 break;
         }
-    }
-
-    if (is_target) {
-        PUSH_BACK(0, num_waiters);
-        PUSH_BACK(1, num_released);
     }
 
 	Assert(dlist_is_empty(&wakeup) || pg_atomic_read_u32(&lock->state) & LW_FLAG_HAS_WAITERS);
@@ -974,9 +960,6 @@ LWLockWakeup(LWLock *lock)
 static void
 LWLockQueueSelf(LWLock *lock, LWLockMode mode)
 {
-    int is_target   = (lock == WALWriteLock);
-    int num_waiters = 0;
-    dlist_iter      iter;
 #ifdef LWLOCK_STATS
 	lwlock_stats *lwstats;
 
@@ -1005,14 +988,6 @@ LWLockQueueSelf(LWLock *lock, LWLockMode mode)
 
 	MyProc->lwWaiting = true;
 	MyProc->lwWaitMode = mode;
-    MyProc->trxStartTime = get_trx_start();
-
-    if (is_target) {
-        dlist_foreach(iter, &lock->waiters) {
-            ++num_waiters;
-        }
-        PUSH_BACK(2, num_waiters);
-    }
 
 	/* LW_WAIT_UNTIL_FREE waiters are always at the front of the queue */
 	if (mode == LW_WAIT_UNTIL_FREE)
