@@ -2805,6 +2805,7 @@ XLogBackgroundFlush(void)
 	/* now wait for any in-progress insertions to finish and get write lock */
 	WaitXLogInsertionsToFinish(WriteRqstPtr);
 	LWLockAcquire(WALWriteLock, LW_EXCLUSIVE);
+    log_command("Lock is acquired");
 	LogwrtResult = XLogCtl->LogwrtResult;
 	if (WriteRqstPtr > LogwrtResult.Flush)
 	{
@@ -2827,10 +2828,6 @@ XLogBackgroundFlush(void)
 	 * as many of the no-longer-needed WAL buffers for future use as we can.
 	 */
 	AdvanceXLInsertBuffer(InvalidXLogRecPtr, true);
-
-    if (wrote_something) {
-        log_command("Background flushing");
-    }
 
 	return wrote_something;
 }
