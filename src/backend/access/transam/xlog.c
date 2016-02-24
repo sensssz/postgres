@@ -2158,6 +2158,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 	int			npages;
 	int			startidx;
 	uint32		startoffset;
+    ulint       num_records;
 
 	/* We should always be inside a critical section here */
 	Assert(CritSectionCount > 0);
@@ -2276,7 +2277,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 			from = XLogCtl->pages + startidx * (Size) XLOG_BLCKSZ;
 			nbytes = npages * (Size) XLOG_BLCKSZ;
 			nleft = nbytes;
-            ulint num_records = nbytes / sizeof(XLogRecData);
+            num_records = nbytes / sizeof(XLogRecData);
             add_log_record(num_records, nbytes);
 
 			do
