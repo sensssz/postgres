@@ -247,7 +247,6 @@ timespec get_trx_start() {
 }
 
 void add_log_record(ulint num, ulint size) {
-    TraceTool::get_instance()->log_file << "Size is " << TraceTool::get_instance()->num_records.size() << endl;
     pthread_mutex_lock(&TraceTool::log_record_mutex);
     TraceTool::get_instance()->num_records.back() += num;
     TraceTool::get_instance()->size_records.back() += size;
@@ -427,24 +426,25 @@ void TraceTool::write_latency(string dir) {
 }
 
 void TraceTool::write_log_data(string dir) {
-    pthread_mutex_lock(&log_record_mutex);
     ofstream num_log;
     ofstream size_log;
     num_log.open(dir + "num_" + to_string(id));
     size_log.open(dir + "size_" + to_string(id));
 
+    pthread_mutex_lock(&log_record_mutex);
     log_file << "Number of records: " << num_records.size() << endl;
     for (int index = 0; index < num_records.size(); ++index) {
         ulint num = num_records[index];
         ulint size = size_records[index];
         num_log << index << ',' << num << endl;
-        size_log << index << ',' << size / num << endl;
+        size_log << index << ',' << size << endl;
     }
     vector<ulint>().swap(num_records);
     vector<ulint>().swap(size_records);
+    pthread_mutex_unlock(&log_record_mutex);
+
     num_log.close();
     size_log.close();
-    pthread_mutex_unlock(&log_record_mutex);
 }
 
 void TraceTool::write_log() {
