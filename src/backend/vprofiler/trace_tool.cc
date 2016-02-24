@@ -449,6 +449,6 @@ void TraceTool::write_log() {
 //    log_file << "Write log on instance " << instance << ", id is " << id << endl;
     if (id > 0) {
         write_latency("latency/");
-        write_log_data("log/");
+        write_log_data("latency/");
     }
 }
