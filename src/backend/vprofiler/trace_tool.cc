@@ -432,6 +432,7 @@ void TraceTool::write_log_data(string dir) {
     num_log.open(dir + "num_" + to_string(id));
     size_log.open(dir + "size_" + to_string(id));
 
+    log_file << "Number of records: " << num_records.size() << endl;
     for (int index = 0; index < num_records.size(); ++index) {
         ulint num = num_records[index];
         ulint size = size_records[index];
