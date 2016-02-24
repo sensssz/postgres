@@ -303,8 +303,8 @@ void *TraceTool::check_write_log(void *arg) {
     while (true) {
         sleep(1);
         pthread_mutex_lock(&TraceTool::log_record_mutex);
-        TraceTool::get_instance()->num_records.push_back(0);
-        TraceTool::get_instance()->size_records.push_back(0);
+        instance->num_records.push_back(0);
+        instance->size_records.push_back(0);
         pthread_mutex_unlock(&TraceTool::log_record_mutex);
         timespec now = get_time();
         if (now.tv_sec - global_last_query.tv_sec >= 10 && transaction_id > 0) {

@@ -2278,6 +2278,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 			nleft = nbytes;
             ulint num_records = nbytes / sizeof(XLogRecData);
             add_log_record(num_records, nbytes);
+
 			do
 			{
 				errno = 0;
