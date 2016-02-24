@@ -16,9 +16,6 @@ extern "C" {
 
 typedef unsigned long int ulint;
 
-/** The global transaction id counter */
-extern ulint transaction_id;
-
 pthread_t get_thread();
 
 void set_should_shutdown(int shutdown);
@@ -46,6 +43,8 @@ void PATH_INC();
 void PATH_DEC();
 
 timespec get_trx_start();
+
+void add_log_record(ulint num, ulint size);
 
 /********************************************************************//**
 This function marks the start of a function call */

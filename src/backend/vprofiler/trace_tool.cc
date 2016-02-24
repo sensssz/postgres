@@ -21,7 +21,7 @@ using std::set;
 #define NUMBER_OF_FUNCTIONS 0
 #define LATENCY
 
-ulint transaction_id = 0;
+static ulint transaction_id = 0;
 
 class TraceTool {
 private:
@@ -37,6 +37,10 @@ private:
 
     TraceTool(TraceTool const &) { };
 public:
+    vector<ulint> num_records;
+    vector<ulint> size_records;
+    static pthread_mutex_t log_record_mutex;
+
     static timespec global_last_query;
     static __thread timespec trans_start;
     static __thread ulint current_transaction_id;
@@ -92,6 +96,7 @@ public:
     /********************************************************************//**
     Dump data about function running time and latency to log file. */
     void write_latency(string dir);
+    void write_log_data(string dir);
     /********************************************************************//**
     Write necessary data to log files. */
     void write_log();
@@ -108,6 +113,7 @@ timespec TraceTool::global_last_query;
 
 ofstream TraceTool::log_file;
 
+pthread_mutex_t TraceTool::log_record_mutex = PTHREAD_MUTEX_INITIALIZER;
 __thread int TraceTool::path_count = 0;
 __thread bool TraceTool::is_commit = false;
 __thread bool TraceTool::commit_successful = true;
@@ -240,6 +246,13 @@ timespec get_trx_start() {
     return TraceTool::get_instance()->trans_start;
 }
 
+void add_log_record(ulint num, ulint size) {
+    pthread_mutex_lock(&TraceTool::log_record_mutex);
+    TraceTool::get_instance()->num_records.back() += num;
+    TraceTool::get_instance()->size_records.back() += size;
+    pthread_mutex_unlock(&TraceTool::log_record_mutex);
+}
+
 /********************************************************************//**
 Get the current TraceTool instance. */
 TraceTool *TraceTool::get_instance() {
@@ -270,6 +283,9 @@ TraceTool::TraceTool() : function_times() {
     transaction_start_times.reserve(500000);
     transaction_start_times.push_back(0);
 
+    num_records.push_back(0);
+    size_records.push_back(0);
+
     srand(time(0));
 }
 
@@ -285,8 +301,11 @@ void *TraceTool::check_write_log(void *arg) {
        check if there's any query comes in. If not, then
        dump data to log files. */
     while (true) {
-        sleep(5);
-//        log_file << "Checking," << global_last_query.tv_sec << ":" << global_last_query.tv_nsec << "," << transaction_id << endl;
+        sleep(1);
+        pthread_mutex_lock(&TraceTool::log_record_mutex);
+        TraceTool::get_instance()->num_records.push_back(0);
+        TraceTool::get_instance()->size_records.push_back(0);
+        pthread_mutex_unlock(&TraceTool::log_record_mutex);
         timespec now = get_time();
         if (now.tv_sec - global_last_query.tv_sec >= 10 && transaction_id > 0) {
             /* Create a new TraceTool instance. */
@@ -406,9 +425,30 @@ void TraceTool::write_latency(string dir) {
     tpcc_log.close();
 }
 
+void TraceTool::write_log_data(string dir) {
+    pthread_mutex_lock(&log_record_mutex);
+    ofstream num_log;
+    ofstream size_log;
+    num_log.open(dir + "num_" + to_string(id));
+    size_log.open(dir + "size_" + to_string(id));
+
+    for (int index = 0; index < num_records.size(); ++index) {
+        ulint num = num_records[index];
+        ulint size = size_records[index];
+        num_log << index << ',' << num << endl;
+        size_log << index << ',' << size / num << endl;
+    }
+    vector<ulint>().swap(num_records);
+    vector<ulint>().swap(size_records);
+    num_log.close();
+    size_log.close();
+    pthread_mutex_unlock(&log_record_mutex);
+}
+
 void TraceTool::write_log() {
 //    log_file << "Write log on instance " << instance << ", id is " << id << endl;
     if (id > 0) {
         write_latency("latency/");
+        write_log_data("log/");
     }
 }
