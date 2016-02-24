@@ -2279,7 +2279,6 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 			nleft = nbytes;
             num_records = nbytes / sizeof(XLogRecData);
             add_log_record(num_records, nbytes);
-            log_command("Logging log data");
 
 			do
 			{

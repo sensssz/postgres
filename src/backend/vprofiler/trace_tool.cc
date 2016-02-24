@@ -247,6 +247,7 @@ timespec get_trx_start() {
 }
 
 void add_log_record(ulint num, ulint size) {
+    TraceTool::get_instance()->log_file << "Size is " << TraceTool::get_instance()->num_records.size() << endl;
     pthread_mutex_lock(&TraceTool::log_record_mutex);
     TraceTool::get_instance()->num_records.back() += num;
     TraceTool::get_instance()->size_records.back() += size;
