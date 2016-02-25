@@ -1370,6 +1370,7 @@ LWLockAcquireOrWait(LWLock *lock, LWLock *extraLock, int *useFirstLock, LWLockMo
 	bool		mustwait;
 	int			extraWaits = 0;
     LWLock      *selectedLock = lock;
+    *useFirstLock = 1;
 #ifdef LWLOCK_STATS
 	lwlock_stats *lwstats;
 
@@ -1407,14 +1408,11 @@ LWLockAcquireOrWait(LWLock *lock, LWLock *extraLock, int *useFirstLock, LWLockMo
         }
     }
 
-    if (mustwait)
-    {
-        selectedLock = lockWithSmallerQueue(lock, extraLock);
-        *useFirstLock = selectedLock == lock;
-    }
-
 	if (mustwait)
 	{
+        selectedLock = lockWithSmallerQueue(lock, extraLock);
+        *useFirstLock = selectedLock == lock;
+
 		LWLockQueueSelf(selectedLock, LW_WAIT_UNTIL_FREE);
 
 		mustwait = LWLockAttemptLock(selectedLock, mode);
