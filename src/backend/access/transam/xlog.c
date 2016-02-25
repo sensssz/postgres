@@ -2928,6 +2928,8 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 
 	XLogFilePath(path, ThisTimeLineID, logsegno);
 
+    ereport(LOG, (errmsg("Path is %s", path)));
+
 	/*
 	 * Try to use existent file (checkpoint maker may have created it already)
 	 */
@@ -3298,8 +3300,6 @@ XLogFileOpen(XLogSegNo segno)
 	int			fd;
 
 	XLogFilePath(path, ThisTimeLineID, segno);
-
-    ereport(LOG, (errmsg("Path is %s", path)));
 
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
 					   S_IRUSR | S_IWUSR);
