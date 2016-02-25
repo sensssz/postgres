@@ -2219,6 +2219,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 
 			/* create/use new log file */
 			use_existent = true;
+            ereport(LOG, (errmsg("Creating log files")));
 			openLogFile = XLogFileInit(openLogSegNo, &use_existent, true);
 			openLogOff = 0;
 		}
@@ -2927,8 +2928,6 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	int			nbytes;
 
 	XLogFilePath(path, ThisTimeLineID, logsegno);
-
-    ereport(LOG, (errmsg("Path is %s", path)));
 
 	/*
 	 * Try to use existent file (checkpoint maker may have created it already)
