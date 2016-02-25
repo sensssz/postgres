@@ -1782,6 +1782,14 @@ LWLockRelease(LWLock *lock)
 	bool		check_waiters;
 	int			i;
 
+    if (lock == WALWriteLock)
+    {
+        ereport(LOG, (errmsg("Lock is WALWriteLok")));
+    }
+    else
+    {
+        ereport(LOG, (errmsg("Lock is EWALWriteLok")));
+    }
 	/*
 	 * Remove lock from list of locks held.  Usually, but not always, it will
 	 * be the latest-acquired lock; so search array backwards.
