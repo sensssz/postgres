@@ -1781,7 +1781,6 @@ LWLockRelease(LWLock *lock)
 	uint32		oldstate;
 	bool		check_waiters;
 	int			i;
-
 	/*
 	 * Remove lock from list of locks held.  Usually, but not always, it will
 	 * be the latest-acquired lock; so search array backwards.

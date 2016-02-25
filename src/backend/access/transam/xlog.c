@@ -2730,10 +2730,10 @@ XLogFlush(XLogRecPtr record)
 
 		XLogWrite(WriteRqst, false);
 
-        usingMain = 1;
-        openLogFile = openLogFileMain;
-
 		LWLockRelease(selectedLock);
+
+		usingMain = 1;
+		openLogFile = openLogFileMain;
 		/* done */
 		break;
 	}
