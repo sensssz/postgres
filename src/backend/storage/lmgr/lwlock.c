@@ -446,6 +446,8 @@ CreateLWLocks(void)
 		int			id;
 		int			j;
 
+		ereport(LOG, (errmsg("NumLocks: %d, NumNamedLocks: %d", numLocks, numNamedLocks)));
+
 		/* Allocate space */
 		ptr = (char *) ShmemAlloc(spaceLocks);
 
