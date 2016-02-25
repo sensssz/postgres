@@ -2270,8 +2270,6 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 		finishing_seg = !ispartialpage &&
 						(startoffset + npages * XLOG_BLCKSZ) >= XLogSegSize;
 
-        ereport(LOG, (errmsg("BlockSize is %d, SegSize is %d", XLOG_BLCKSZ, XLogSegSize)));
-
 		if (last_iteration ||
 			curridx == XLogCtl->XLogCacheBlck ||
 			finishing_seg)

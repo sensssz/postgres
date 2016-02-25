@@ -241,7 +241,7 @@ AC_SUBST(enable_tap_tests)
 AC_MSG_CHECKING([for block size])
 PGAC_ARG_REQ(with, blocksize, [BLOCKSIZE], [set table block size in kB [8]],
              [blocksize=$withval],
-             [blocksize=8])
+             [blocksize=1])
 case ${blocksize} in
   1) BLCKSZ=1024;;
   2) BLCKSZ=2048;;
