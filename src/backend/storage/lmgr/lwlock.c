@@ -1337,11 +1337,12 @@ LWLockConditionalAcquire(LWLock *lock, LWLockMode mode)
  * wake up, observe that their records have already been flushed, and return.
  */
 bool
-LWLockAcquireOrWait(LWLock *lock, LWLockMode mode)
+LWLockAcquireOrWait(LWLock *lock, LWLock *extraLock, int *useFirstLock, LWLockMode mode)
 {
 	PGPROC	   *proc = MyProc;
 	bool		mustwait;
 	int			extraWaits = 0;
+    LWLock      *selectedLock = lock;
 #ifdef LWLOCK_STATS
 	lwlock_stats *lwstats;
 
@@ -1368,6 +1369,15 @@ LWLockAcquireOrWait(LWLock *lock, LWLockMode mode)
 	 * protocol as LWLockAcquire(). Check its comments for details.
 	 */
 	mustwait = LWLockAttemptLock(lock, mode);
+
+//    if (mustwait)
+//    {
+//        mustwait = LWLockAttemptLock(extraLock, mode);
+//        if (!mustwait)
+//        {
+//            *useFirstLock = 0;
+//        }
+//    }
 
 	if (mustwait)
 	{

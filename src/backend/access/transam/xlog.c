@@ -710,6 +710,9 @@ static const char *xlogSourceNames[] = {"any", "archive", "pg_xlog", "stream"};
  * used to write the XLOG, and so will normally refer to the active segment.
  */
 static int	openLogFile = -1;
+static int  openLogFileMain = -1;
+static int  openLogFileExtra = -1;
+static int  usingMain = 1;
 static XLogSegNo openLogSegNo = 0;
 static uint32 openLogOff = 0;
 
@@ -2219,8 +2222,15 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 
 			/* create/use new log file */
 			use_existent = true;
-            ereport(LOG, (errmsg("Creating log files")));
 			openLogFile = XLogFileInit(openLogSegNo, &use_existent, true);
+            if (usingMain)
+            {
+                openLogFileMain = openLogFile;
+            }
+            else
+            {
+                openLogFileExtra = openLogFile;
+            }
 			openLogOff = 0;
 		}
 
@@ -2229,6 +2239,14 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 		{
 			XLByteToPrevSeg(LogwrtResult.Write, openLogSegNo);
 			openLogFile = XLogFileOpen(openLogSegNo);
+            if (usingMain)
+            {
+                openLogFileMain = openLogFile;
+            }
+            else
+            {
+                openLogFileExtra = openLogFile;
+            }
 			openLogOff = 0;
 		}
 
@@ -2251,6 +2269,8 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 
 		finishing_seg = !ispartialpage &&
 						(startoffset + npages * XLOG_BLCKSZ) >= XLogSegSize;
+
+        ereport(LOG, (errmsg("BlockSize is %d, SegSize is %d", XLOG_BLCKSZ, XLogSegSize)));
 
 		if (last_iteration ||
 			curridx == XLogCtl->XLogCacheBlck ||
@@ -2380,6 +2400,14 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 			{
 				XLByteToPrevSeg(LogwrtResult.Write, openLogSegNo);
 				openLogFile = XLogFileOpen(openLogSegNo);
+                if (usingMain)
+                {
+                    openLogFileMain = openLogFile;
+                }
+                else
+                {
+                    openLogFileExtra = openLogFile;
+                }
 				openLogOff = 0;
 			}
 
@@ -2641,7 +2669,7 @@ XLogFlush(XLogRecPtr record)
 		 * helps to maintain a good rate of group committing when the system
 		 * is bottlenecked by the speed of fsyncing.
 		 */
-		if (!LWLockAcquireOrWait(WALWriteLock, LW_EXCLUSIVE))
+		if (!LWLockAcquireOrWait(WALWriteLock, EWALWriteLock, LW_EXCLUSIVE))
 		{
 			/*
 			 * The lock is now free, but we didn't acquire it yet. Before we
@@ -2928,8 +2956,6 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	int			nbytes;
 
 	XLogFilePath(path, ThisTimeLineID, logsegno);
-
-    ereport(LOG, (errmsg("Path is %s", path)));
 
 	/*
 	 * Try to use existent file (checkpoint maker may have created it already)
@@ -3499,6 +3525,14 @@ XLogFileClose(void)
 						errmsg("could not close log file %s: %m",
 							   XLogFileNameP(ThisTimeLineID, openLogSegNo))));
 	openLogFile = -1;
+    if (usingMain)
+    {
+        openLogFileMain = -1;
+    }
+    else
+    {
+        openLogFileExtra = -1;
+    }
 }
 
 /*
@@ -4833,7 +4867,7 @@ BootStrapXLOG(void)
 
 	/* Create first XLOG segment file */
 	use_existent = false;
-	openLogFile = XLogFileInit(1, &use_existent, false);
+	openLogFileMain = openLogFile = XLogFileInit(1, &use_existent, false);
 
 	/* Write the first page with the initial record */
 	errno = 0;
@@ -4857,7 +4891,7 @@ BootStrapXLOG(void)
 				(errcode_for_file_access(),
 						errmsg("could not close bootstrap transaction log file: %m")));
 
-	openLogFile = -1;
+    openLogFileMain = openLogFile = -1;
 
 	/* Now create pg_control */
 
