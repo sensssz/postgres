@@ -2977,6 +2977,8 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
         EXLogFilePath(path, ThisTimeLineID, logsegno);
     }
 
+    ereport(LOG, (errmsg("Path is %s", path)));
+
 	/*
 	 * Try to use existent file (checkpoint maker may have created it already)
 	 */
