@@ -3299,7 +3299,7 @@ XLogFileOpen(XLogSegNo segno)
 
 	XLogFilePath(path, ThisTimeLineID, segno);
 
-	log_command(path);
+    ereport(LOG, (errmsg("Path is %s", path)));
 
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
 					   S_IRUSR | S_IWUSR);
