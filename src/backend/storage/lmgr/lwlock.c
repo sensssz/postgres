@@ -106,6 +106,7 @@ extern slock_t *ShmemLock;
 #define LW_SHARED_MASK				((uint32) ((1 << 24)-1))
 
 static int proc_compare(const void *arg1, const void *arg2);
+static LWLock *lockWithSmallerQueue(LWLock *lock1, LWLock *lock2);
 
 /*
  * This is indexed by tranche ID and stores metadata for all tranches known
@@ -1322,6 +1323,30 @@ LWLockConditionalAcquire(LWLock *lock, LWLockMode mode)
 	return !mustwait;
 }
 
+static LWLock *
+lockWithSmallerQueue(LWLock *lock1, LWLock *lock2)
+{
+    dlist_iter  iter;
+    int         count1 = 0;
+    int         count2 = 0;
+    dlist_foreach(iter, &lock1->waiters)
+    {
+        count1++;
+    }
+    dlist_foreach(iter, &lock2->waiters)
+    {
+        count2++;
+    }
+    if (count1 <= count2)
+    {
+        return lock1;
+    }
+    else
+    {
+        return lock2;
+    }
+}
+
 /*
  * LWLockAcquireOrWait - Acquire lock, or wait until it's free
  *
@@ -1351,7 +1376,7 @@ LWLockAcquireOrWait(LWLock *lock, LWLock *extraLock, int *useFirstLock, LWLockMo
 
 	Assert(mode == LW_SHARED || mode == LW_EXCLUSIVE);
 
-	PRINT_LWDEBUG("LWLockAcquireOrWait", lock, mode);
+	PRINT_LWDEBUG("LWLockAcquireOrWait", selectedLock, mode);
 
 	/* Ensure we will have room to remember the lock */
 	if (num_held_lwlocks >= MAX_SIMUL_LWLOCKS)
@@ -1370,20 +1395,27 @@ LWLockAcquireOrWait(LWLock *lock, LWLock *extraLock, int *useFirstLock, LWLockMo
 	 */
 	mustwait = LWLockAttemptLock(lock, mode);
 
-//    if (mustwait)
-//    {
-//        mustwait = LWLockAttemptLock(extraLock, mode);
-//        if (!mustwait)
-//        {
-//            *useFirstLock = 0;
-//        }
-//    }
+    if (mustwait)
+    {
+        mustwait = LWLockAttemptLock(extraLock, mode);
+        if (!mustwait)
+        {
+            selectedLock = extraLock;
+            *useFirstLock = 0;
+        }
+    }
+
+    if (mustwait)
+    {
+        selectedLock = lockWithSmallerQueue(lock, extraLock);
+        *useFirstLock = selectedLock == lock;
+    }
 
 	if (mustwait)
 	{
-		LWLockQueueSelf(lock, LW_WAIT_UNTIL_FREE);
+		LWLockQueueSelf(selectedLock, LW_WAIT_UNTIL_FREE);
 
-		mustwait = LWLockAttemptLock(lock, mode);
+		mustwait = LWLockAttemptLock(selectedLock, mode);
 
 		if (mustwait)
 		{
@@ -1392,12 +1424,12 @@ LWLockAcquireOrWait(LWLock *lock, LWLock *extraLock, int *useFirstLock, LWLockMo
 			 * bogus wakeups, because we share the semaphore with
 			 * ProcWaitForSignal.
 			 */
-			LOG_LWDEBUG("LWLockAcquireOrWait", lock, "waiting");
+			LOG_LWDEBUG("LWLockAcquireOrWait", selectedLock, "waiting");
 
 #ifdef LWLOCK_STATS
 			lwstats->block_count++;
 #endif
-			TRACE_POSTGRESQL_LWLOCK_WAIT_START(T_NAME(lock), T_ID(lock), mode);
+			TRACE_POSTGRESQL_LWLOCK_WAIT_START(T_NAME(selectedLock), T_ID(selectedLock), mode);
 
 			for (;;)
 			{
@@ -1415,13 +1447,13 @@ LWLockAcquireOrWait(LWLock *lock, LWLock *extraLock, int *useFirstLock, LWLockMo
 				Assert(nwaiters < MAX_BACKENDS);
 			}
 #endif
-			TRACE_POSTGRESQL_LWLOCK_WAIT_DONE(T_NAME(lock), T_ID(lock), mode);
+			TRACE_POSTGRESQL_LWLOCK_WAIT_DONE(T_NAME(selectedLock), T_ID(selectedLock), mode);
 
-			LOG_LWDEBUG("LWLockAcquireOrWait", lock, "awakened");
+			LOG_LWDEBUG("LWLockAcquireOrWait", selectedLock, "awakened");
 		}
 		else
 		{
-			LOG_LWDEBUG("LWLockAcquireOrWait", lock, "acquired, undoing queue");
+			LOG_LWDEBUG("LWLockAcquireOrWait", selectedLock, "acquired, undoing queue");
 
 			/*
 			 * Got lock in the second attempt, undo queueing. We need to treat
@@ -1429,7 +1461,7 @@ LWLockAcquireOrWait(LWLock *lock, LWLock *extraLock, int *useFirstLock, LWLockMo
 			 * not necessarily wake up people we've prevented from acquiring
 			 * the lock.
 			 */
-			LWLockDequeueSelf(lock);
+			LWLockDequeueSelf(selectedLock);
 		}
 	}
 
@@ -1443,17 +1475,17 @@ LWLockAcquireOrWait(LWLock *lock, LWLock *extraLock, int *useFirstLock, LWLockMo
 	{
 		/* Failed to get lock, so release interrupt holdoff */
 		RESUME_INTERRUPTS();
-		LOG_LWDEBUG("LWLockAcquireOrWait", lock, "failed");
-		TRACE_POSTGRESQL_LWLOCK_ACQUIRE_OR_WAIT_FAIL(T_NAME(lock), T_ID(lock),
-													 mode);
+		LOG_LWDEBUG("LWLockAcquireOrWait", selectedLock, "failed");
+		TRACE_POSTGRESQL_LWLOCK_ACQUIRE_OR_WAIT_FAIL(T_NAME(selectedLock), T_ID(selectedLock),
+                                                     mode);
 	}
 	else
 	{
-		LOG_LWDEBUG("LWLockAcquireOrWait", lock, "succeeded");
+		LOG_LWDEBUG("LWLockAcquireOrWait", selectedLock, "succeeded");
 		/* Add lock to list of locks held by this backend */
-		held_lwlocks[num_held_lwlocks].lock = lock;
+		held_lwlocks[num_held_lwlocks].lock = selectedLock;
 		held_lwlocks[num_held_lwlocks++].mode = mode;
-		TRACE_POSTGRESQL_LWLOCK_ACQUIRE_OR_WAIT(T_NAME(lock), T_ID(lock), mode);
+		TRACE_POSTGRESQL_LWLOCK_ACQUIRE_OR_WAIT(T_NAME(selectedLock), T_ID(selectedLock), mode);
 	}
 
 	return !mustwait;

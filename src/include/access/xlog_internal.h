@@ -129,6 +129,7 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
  * The XLog directory and control file (relative to $PGDATA)
  */
 #define XLOGDIR				"pg_xlog"
+#define EXLOGDIR			"../elogs"
 #define XLOG_CONTROL_FILE	"global/pg_control"
 
 /*
@@ -172,6 +173,11 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 
 #define XLogFilePath(path, tli, logSegNo)	\
 	snprintf(path, MAXPGPATH, XLOGDIR "/%08X%08X%08X", tli,				\
+			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId),				\
+			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId))
+
+#define EXLogFilePath(path, tli, logSegNo)	\
+	snprintf(path, MAXPGPATH, EXLOGDIR "/%08X%08X%08X", tli,				\
 			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId),				\
 			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId))
 

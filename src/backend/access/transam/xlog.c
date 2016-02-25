@@ -2596,6 +2596,7 @@ XLogFlush(XLogRecPtr record)
 {
 	XLogRecPtr	WriteRqstPtr;
 	XLogwrtRqst WriteRqst;
+    LWLock      *selectedLock;
 
 	/*
 	 * During REDO, we are reading not writing WAL.  Therefore, instead of
@@ -2677,11 +2678,22 @@ XLogFlush(XLogRecPtr record)
 			continue;
 		}
 
+        if (usingMain)
+        {
+            selectedLock = WALWriteLock;
+            openLogFile = openLogFileMain;
+        }
+        else
+        {
+            selectedLock = EWALWriteLock;
+            openLogFile = openLogFileExtra;
+        }
+
 		/* Got the lock; recheck whether request is satisfied */
 		LogwrtResult = XLogCtl->LogwrtResult;
 		if (record <= LogwrtResult.Flush)
 		{
-			LWLockRelease(WALWriteLock);
+			LWLockRelease(selectedLock);
 			break;
 		}
 
@@ -2718,7 +2730,10 @@ XLogFlush(XLogRecPtr record)
 
 		XLogWrite(WriteRqst, false);
 
-		LWLockRelease(WALWriteLock);
+        usingMain = 1;
+        openLogFile = openLogFileMain;
+
+		LWLockRelease(selectedLock);
 		/* done */
 		break;
 	}
@@ -2953,7 +2968,14 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	int			fd;
 	int			nbytes;
 
-	XLogFilePath(path, ThisTimeLineID, logsegno);
+    if (usingMain)
+    {
+        XLogFilePath(path, ThisTimeLineID, logsegno);
+    }
+    else
+    {
+        EXLogFilePath(path, ThisTimeLineID, logsegno);
+    }
 
 	/*
 	 * Try to use existent file (checkpoint maker may have created it already)
