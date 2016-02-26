@@ -3302,11 +3302,11 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 
     if (usingMain)
     {
-        XLogFilePath(path, ThisTimeLineID, segno);
+        XLogFilePath(path, ThisTimeLineID, *segno);
     }
     else
     {
-        EXLogFilePath(path, ThisTimeLineID, segno);
+        EXLogFilePath(path, ThisTimeLineID, *segno);
     }
 
 	/*
@@ -3335,11 +3335,11 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 			(*segno)++;
             if (usingMain)
             {
-                XLogFilePath(path, ThisTimeLineID, segno);
+                XLogFilePath(path, ThisTimeLineID, *segno);
             }
             else
             {
-                EXLogFilePath(path, ThisTimeLineID, segno);
+                EXLogFilePath(path, ThisTimeLineID, *segno);
             }
 		}
 	}
