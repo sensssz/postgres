@@ -3386,7 +3386,7 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 	 * rename() is an acceptable substitute except for the truly paranoid.
 	 */
 #if HAVE_WORKING_LINK
-	if (link(tmppath, xpath) < 0 || !XLogCopy(xpath, expath))
+	if (link(tmppath, xpath) < 0)
 	{
 		if (use_lock)
 			LWLockRelease(ControlFileLock);
@@ -3396,6 +3396,16 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
                                tmppath, xpath)));
 		return false;
 	}
+    if (!XLogCopy(xpath, expath))
+    {
+        if (use_lock)
+            LWLockRelease(ControlFileLock);
+        ereport(LOG,
+                (errcode_for_file_access(),
+                        errmsg("could not copy file \"%s\" to \"%s\" (initialization of log file): %m",
+                               xpath, expath)));
+        return false;
+    }
 	unlink(tmppath);
 #else
 	if (rename(tmppath, path) < 0 || !XLogCopy(xpath, expath))
