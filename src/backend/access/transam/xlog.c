@@ -3263,6 +3263,53 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
 		elog(ERROR, "InstallXLogFileSegment should not have failed");
 }
 
+static bool
+XLogCopy(char *src_path, char *dest_path)
+{
+    char buffer[XLogSegSize];
+    int  src_fd = -1;
+    int  dest_fd = -1;
+    int  nbytes = 0;
+
+    src_fd = BasicOpenFile(src_path, O_RDONLY | PG_BINARY | get_sync_bit(sync_method),
+                       S_IRUSR | S_IWUSR);
+    if (src_fd < 0)
+        ereport(ERROR,
+                (errcode_for_file_access(),
+                        errmsg("could not open file \"%s\": %m", src_path)));
+
+    dest_fd = BasicOpenFile(dest_path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
+                       S_IRUSR | S_IWUSR);
+    if (dest_fd < 0)
+        ereport(ERROR,
+                (errcode_for_file_access(),
+                        errmsg("could not create file \"%s\": %m", dest_path)));
+
+    memset(buffer, 0, sizeof(buffer));
+    nbytes = read(src_fd, buffer, XLogSegSize);
+    write(dest_fd, buffer, nbytes);
+
+    if (pg_fsync(dest_fd) != 0)
+    {
+        close(dest_fd);
+        ereport(ERROR,
+                (errcode_for_file_access(),
+                        errmsg("could not fsync file \"%s\": %m", dest_path)));
+    }
+
+    if (close(src_fd))
+        ereport(ERROR,
+                (errcode_for_file_access(),
+                        errmsg("could not close file \"%s\": %m", src_path)));
+
+    if (close(dest_fd))
+        ereport(ERROR,
+                (errcode_for_file_access(),
+                        errmsg("could not close file \"%s\": %m", dest_path)));
+
+    return true;
+}
+
 /*
  * Install a new XLOG segment file as a current or future log segment.
  *
@@ -3296,17 +3343,12 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 					   bool find_free, XLogSegNo max_segno,
 					   bool use_lock)
 {
-	char		path[MAXPGPATH];
+	char		xpath[MAXPGPATH];
+    char		expath[MAXPGPATH];
 	struct stat stat_buf;
 
-    if (usingMain)
-    {
-        XLogFilePath(path, ThisTimeLineID, *segno);
-    }
-    else
-    {
-        EXLogFilePath(path, ThisTimeLineID, *segno);
-    }
+    XLogFilePath(xpath, ThisTimeLineID, *segno);
+    EXLogFilePath(expath, ThisTimeLineID, *segno);
 
 	/*
 	 * We want to be sure that only one process does this at a time.
@@ -3317,12 +3359,13 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 	if (!find_free)
 	{
 		/* Force installation: get rid of any pre-existing segment file */
-		unlink(path);
+		unlink(xpath);
+        unlink(expath);
 	}
 	else
 	{
 		/* Find a free slot to put it in */
-		while (stat(path, &stat_buf) == 0)
+		while (stat(xpath, &stat_buf) == 0)
 		{
 			if ((*segno) >= max_segno)
 			{
@@ -3332,14 +3375,8 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 				return false;
 			}
 			(*segno)++;
-            if (usingMain)
-            {
-                XLogFilePath(path, ThisTimeLineID, *segno);
-            }
-            else
-            {
-                EXLogFilePath(path, ThisTimeLineID, *segno);
-            }
+            XLogFilePath(xpath, ThisTimeLineID, *segno);
+            EXLogFilePath(expath, ThisTimeLineID, *segno);
 		}
 	}
 
@@ -3349,19 +3386,19 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 	 * rename() is an acceptable substitute except for the truly paranoid.
 	 */
 #if HAVE_WORKING_LINK
-	if (link(tmppath, path) < 0)
+	if (link(tmppath, xpath) < 0 || !XLogCopy(xpath, expath))
 	{
 		if (use_lock)
 			LWLockRelease(ControlFileLock);
 		ereport(LOG,
 				(errcode_for_file_access(),
 						errmsg("could not link file \"%s\" to \"%s\" (initialization of log file): %m",
-							   tmppath, path)));
+                               tmppath, xpath)));
 		return false;
 	}
 	unlink(tmppath);
 #else
-	if (rename(tmppath, path) < 0)
+	if (rename(tmppath, path) < 0 || !XLogCopy(xpath, expath))
 	{
 		if (use_lock)
 			LWLockRelease(ControlFileLock);
