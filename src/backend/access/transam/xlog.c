@@ -3022,7 +3022,6 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	fd = BasicOpenFile(tmppath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
-        ereport(LOG, (errmsg("errno: %d, errmsg: %s", errno, strerror(errno))));
 		ereport(ERROR,
 				(errcode_for_file_access(),
 						errmsg("could not create file \"%s\": %m", tmppath)));
