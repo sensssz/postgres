@@ -3005,7 +3005,16 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	 */
 	elog(DEBUG2, "creating and filling new WAL file");
 
-	snprintf(tmppath, MAXPGPATH, XLOGDIR "/xlogtemp.%d", (int) getpid());
+	if (usingMain)
+	{
+		snprintf(tmppath, MAXPGPATH, XLOGDIR
+				"/xlogtemp.%d", (int) getpid());
+	}
+    else
+    {
+        snprintf(tmppath, MAXPGPATH, EXLOGDIR
+                "/xlogtemp.%d", (int) getpid());
+    }
 
 	unlink(tmppath);
 
