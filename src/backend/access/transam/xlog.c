@@ -3267,7 +3267,7 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
 static bool
 XLogCopy(char *src_path, char *dest_path)
 {
-    char buffer[XLOG_BLKSZ];
+    char buffer[XLOG_BLCKSZ];
     int  src_fd = -1;
     int  dest_fd = -1;
     int  nbytes = 0;
