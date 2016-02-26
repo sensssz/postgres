@@ -3157,11 +3157,11 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
 
     if (usingMain)
     {
-        XLogFilePath(path, ThisTimeLineID, logsegno);
+        XLogFilePath(path, ThisTimeLineID, destsegno);
     }
     else
     {
-        EXLogFilePath(path, ThisTimeLineID, logsegno);
+        EXLogFilePath(path, ThisTimeLineID, destsegno);
     }
 	srcfd = OpenTransientFile(path, O_RDONLY | PG_BINARY, 0);
 	if (srcfd < 0)
@@ -3302,11 +3302,11 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 
     if (usingMain)
     {
-        XLogFilePath(path, ThisTimeLineID, logsegno);
+        XLogFilePath(path, ThisTimeLineID, segno);
     }
     else
     {
-        EXLogFilePath(path, ThisTimeLineID, logsegno);
+        EXLogFilePath(path, ThisTimeLineID, segno);
     }
 
 	/*
@@ -3335,11 +3335,11 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 			(*segno)++;
             if (usingMain)
             {
-                XLogFilePath(path, ThisTimeLineID, logsegno);
+                XLogFilePath(path, ThisTimeLineID, segno);
             }
             else
             {
-                EXLogFilePath(path, ThisTimeLineID, logsegno);
+                EXLogFilePath(path, ThisTimeLineID, segno);
             }
 		}
 	}
@@ -3391,11 +3391,11 @@ XLogFileOpen(XLogSegNo segno)
 
     if (usingMain)
     {
-        XLogFilePath(path, ThisTimeLineID, logsegno);
+        XLogFilePath(path, ThisTimeLineID, segno);
     }
     else
     {
-        EXLogFilePath(path, ThisTimeLineID, logsegno);
+        EXLogFilePath(path, ThisTimeLineID, segno);
     }
 
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
@@ -3445,11 +3445,11 @@ XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 		case XLOG_FROM_STREAM:
             if (usingMain)
             {
-                XLogFilePath(path, ThisTimeLineID, logsegno);
+                XLogFilePath(path, ThisTimeLineID, segno);
             }
             else
             {
-                EXLogFilePath(path, ThisTimeLineID, logsegno);
+                EXLogFilePath(path, ThisTimeLineID, segno);
             }
 			restoredFromArchive = false;
 			break;
@@ -3571,11 +3571,11 @@ XLogFileReadAnyTLI(XLogSegNo segno, int emode, int source)
 	/* Couldn't find it.  For simplicity, complain about front timeline */
     if (usingMain)
     {
-        XLogFilePath(path, ThisTimeLineID, logsegno);
+        XLogFilePath(path, ThisTimeLineID, segno);
     }
     else
     {
-        EXLogFilePath(path, ThisTimeLineID, logsegno);
+        EXLogFilePath(path, ThisTimeLineID, segno);
     }
 	errno = ENOENT;
 	ereport(emode,
@@ -7414,11 +7414,11 @@ StartupXLOG(void)
 
                 if (usingMain)
                 {
-                    XLogFilePath(path, ThisTimeLineID, logsegno);
+                    XLogFilePath(path, ThisTimeLineID, endLogSegNo);
                 }
                 else
                 {
-                    EXLogFilePath(path, ThisTimeLineID, logsegno);
+                    EXLogFilePath(path, ThisTimeLineID, endLogSegNo);
                 }
 				snprintf(partialfname, MAXFNAMELEN, "%s.partial", origfname);
 				snprintf(partialpath, MAXPGPATH, "%s.partial", origpath);
