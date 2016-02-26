@@ -1331,14 +1331,18 @@ lockWithSmallerQueue(LWLock *lock1, LWLock *lock2)
     dlist_iter  iter;
     int         count1 = 0;
     int         count2 = 0;
+	SpinLockAcquire(&lock1->mutex);
     dlist_foreach(iter, &lock1->waiters)
     {
         count1++;
     }
+	SpinLockRelease(&lock1->mutex);
+	SpinLockAcquire(&lock2->mutex);
     dlist_foreach(iter, &lock2->waiters)
     {
         count2++;
     }
+	SpinLockRelease(&lock2->mutex);
     if (count1 <= count2)
     {
         return lock1;
