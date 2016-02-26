@@ -7414,11 +7414,11 @@ StartupXLOG(void)
 
                 if (usingMain)
                 {
-                    XLogFilePath(origfname, ThisTimeLineID, endLogSegNo);
+                    XLogFilePath(origpath, ThisTimeLineID, endLogSegNo);
                 }
                 else
                 {
-                    EXLogFilePath(origfname, ThisTimeLineID, endLogSegNo);
+                    EXLogFilePath(origpath, ThisTimeLineID, endLogSegNo);
                 }
 				snprintf(partialfname, MAXFNAMELEN, "%s.partial", origfname);
 				snprintf(partialpath, MAXPGPATH, "%s.partial", origpath);
