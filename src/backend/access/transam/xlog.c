@@ -3267,7 +3267,7 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
 static bool
 XLogCopy(char *src_path, char *dest_path)
 {
-    char buffer[XLogSegSize];
+    char buffer[XLOG_BLKSZ];
     int  src_fd = -1;
     int  dest_fd = -1;
     int  nbytes = 0;
@@ -3286,9 +3286,55 @@ XLogCopy(char *src_path, char *dest_path)
                 (errcode_for_file_access(),
                         errmsg("could not create file \"%s\": %m", dest_path)));
 
-    memset(buffer, 0, sizeof(buffer));
-    nbytes = read(src_fd, buffer, XLogSegSize);
-    write(dest_fd, buffer, nbytes);
+    /*
+     * Do the data copying.
+     */
+    for (nbytes = 0; nbytes < XLogSegSize; nbytes += sizeof(buffer))
+    {
+        int	nread = nbytes;
+
+        /*
+         * The part that is not read from the source file is filled with
+         * zeros.
+         */
+        if (nread < sizeof(buffer))
+            memset(buffer, 0, sizeof(buffer));
+
+        if (nread > 0)
+        {
+            if (nread > sizeof(buffer))
+                nread = sizeof(buffer);
+            errno = 0;
+            if (read(src_fd, buffer, nread) != nread)
+            {
+                if (errno != 0)
+                    ereport(ERROR,
+                            (errcode_for_file_access(),
+                                    errmsg("could not read file \"%s\": %m",
+                                           src_path)));
+                else
+                    ereport(ERROR,
+                            (errmsg("not enough data in file \"%s\"",
+                                    src_path)));
+            }
+        }
+        errno = 0;
+        if ((int) write(dest_fd, buffer, sizeof(buffer)) != (int) sizeof(buffer))
+        {
+            int			save_errno = errno;
+
+            /*
+             * If we fail to make the file, delete it to release disk space
+             */
+            unlink(dest_path);
+            /* if write didn't set errno, assume problem is no disk space */
+            errno = save_errno ? save_errno : ENOSPC;
+
+            ereport(ERROR,
+                    (errcode_for_file_access(),
+                            errmsg("could not write to file \"%s\": %m", dest_path)));
+        }
+    }
 
     if (pg_fsync(dest_fd) != 0)
     {
