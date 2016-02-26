@@ -3154,7 +3154,15 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
 	/*
 	 * Open the source file
 	 */
-	XLogFilePath(path, srcTLI, srcsegno);
+
+    if (usingMain)
+    {
+        XLogFilePath(path, ThisTimeLineID, logsegno);
+    }
+    else
+    {
+        EXLogFilePath(path, ThisTimeLineID, logsegno);
+    }
 	srcfd = OpenTransientFile(path, O_RDONLY | PG_BINARY, 0);
 	if (srcfd < 0)
 		ereport(ERROR,
@@ -3164,9 +3172,18 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
 	/*
 	 * Copy into a temp file name.
 	 */
-	snprintf(tmppath, MAXPGPATH, XLOGDIR "/xlogtemp.%d", (int) getpid());
+    if (usingMain)
+    {
+        snprintf(tmppath, MAXPGPATH, XLOGDIR
+                "/xlogtemp.%d", (int) getpid());
+    }
+    else
+    {
+        snprintf(tmppath, MAXPGPATH, EXLOGDIR
+                "/xlogtemp.%d", (int) getpid());
+    }
 
-	unlink(tmppath);
+    unlink(tmppath);
 
 	/* do not use get_sync_bit() here --- want to fsync only at end of fill */
 	fd = OpenTransientFile(tmppath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
@@ -3283,7 +3300,14 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 	char		path[MAXPGPATH];
 	struct stat stat_buf;
 
-	XLogFilePath(path, ThisTimeLineID, *segno);
+    if (usingMain)
+    {
+        XLogFilePath(path, ThisTimeLineID, logsegno);
+    }
+    else
+    {
+        EXLogFilePath(path, ThisTimeLineID, logsegno);
+    }
 
 	/*
 	 * We want to be sure that only one process does this at a time.
@@ -3309,7 +3333,14 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 				return false;
 			}
 			(*segno)++;
-			XLogFilePath(path, ThisTimeLineID, *segno);
+            if (usingMain)
+            {
+                XLogFilePath(path, ThisTimeLineID, logsegno);
+            }
+            else
+            {
+                EXLogFilePath(path, ThisTimeLineID, logsegno);
+            }
 		}
 	}
 
@@ -3358,7 +3389,14 @@ XLogFileOpen(XLogSegNo segno)
 	char		path[MAXPGPATH];
 	int			fd;
 
-	XLogFilePath(path, ThisTimeLineID, segno);
+    if (usingMain)
+    {
+        XLogFilePath(path, ThisTimeLineID, logsegno);
+    }
+    else
+    {
+        EXLogFilePath(path, ThisTimeLineID, logsegno);
+    }
 
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | get_sync_bit(sync_method),
 					   S_IRUSR | S_IWUSR);
@@ -3405,7 +3443,14 @@ XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 
 		case XLOG_FROM_PG_XLOG:
 		case XLOG_FROM_STREAM:
-			XLogFilePath(path, tli, segno);
+            if (usingMain)
+            {
+                XLogFilePath(path, ThisTimeLineID, logsegno);
+            }
+            else
+            {
+                EXLogFilePath(path, ThisTimeLineID, logsegno);
+            }
 			restoredFromArchive = false;
 			break;
 
@@ -3524,7 +3569,14 @@ XLogFileReadAnyTLI(XLogSegNo segno, int emode, int source)
 	}
 
 	/* Couldn't find it.  For simplicity, complain about front timeline */
-	XLogFilePath(path, recoveryTargetTLI, segno);
+    if (usingMain)
+    {
+        XLogFilePath(path, ThisTimeLineID, logsegno);
+    }
+    else
+    {
+        EXLogFilePath(path, ThisTimeLineID, logsegno);
+    }
 	errno = ENOENT;
 	ereport(emode,
 			(errcode_for_file_access(),
@@ -7360,7 +7412,14 @@ StartupXLOG(void)
 				char		partialfname[MAXFNAMELEN];
 				char		partialpath[MAXPGPATH];
 
-				XLogFilePath(origpath, EndOfLogTLI, endLogSegNo);
+                if (usingMain)
+                {
+                    XLogFilePath(path, ThisTimeLineID, logsegno);
+                }
+                else
+                {
+                    EXLogFilePath(path, ThisTimeLineID, logsegno);
+                }
 				snprintf(partialfname, MAXFNAMELEN, "%s.partial", origfname);
 				snprintf(partialpath, MAXPGPATH, "%s.partial", origpath);
 
