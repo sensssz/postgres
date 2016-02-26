@@ -3354,6 +3354,7 @@ XLogCopy(char *src_path, char *dest_path)
                 (errcode_for_file_access(),
                         errmsg("could not close file \"%s\": %m", dest_path)));
 
+    ereport(LOG, (errmsg("Copy %s to %s", src_path, dest_path)));
     return true;
 }
 
