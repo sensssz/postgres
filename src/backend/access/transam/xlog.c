@@ -2978,8 +2978,6 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
         EXLogFilePath(path, ThisTimeLineID, logsegno);
     }
 
-    ereport(LOG, (errmsg("Path is %s", path)));
-
 	/*
 	 * Try to use existent file (checkpoint maker may have created it already)
 	 */
@@ -3354,7 +3352,6 @@ XLogCopy(char *src_path, char *dest_path)
                 (errcode_for_file_access(),
                         errmsg("could not close file \"%s\": %m", dest_path)));
 
-    ereport(LOG, (errmsg("Copy %s to %s", src_path, dest_path)));
     return true;
 }
 
